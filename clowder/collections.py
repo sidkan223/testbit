@@ -9,7 +9,7 @@ import logging
 import requests
 
 
-def upload_collection_preview(connector, host, key, collectionid, previewfile, previewmetadata):
+def upload_preview(connector, host, key, collectionid, previewfile, previewmetadata):
     """Upload preview to Clowder.
 
     Keyword arguments:

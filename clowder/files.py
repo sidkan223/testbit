@@ -11,7 +11,7 @@ import tempfile
 import requests
 
 
-def download_file(connector, host, key, fileid, intermediatefileid=None, ext=""):
+def download(connector, host, key, fileid, intermediatefileid=None, ext=""):
     """Download file to be processed from Clowder.
 
     Keyword arguments:
@@ -41,7 +41,7 @@ def download_file(connector, host, key, fileid, intermediatefileid=None, ext="")
     return inputfilename
 
 
-def download_file_metadata(connector, host, key, fileid, extractor=None):
+def download_metadata(connector, host, key, fileid, extractor=None):
     """Download file JSON-LD metadata from Clowder.
 
     Keyword arguments:
@@ -63,7 +63,7 @@ def download_file_metadata(connector, host, key, fileid, extractor=None):
     return result.json()
 
 
-def upload_file_metadata(connector, host, key, fileid, metadata):
+def upload_metadata(connector, host, key, fileid, metadata):
     """Upload file JSON-LD metadata to Clowder.
 
     Keyword arguments:
@@ -83,7 +83,7 @@ def upload_file_metadata(connector, host, key, fileid, metadata):
     result.raise_for_status()
 
 
-def upload_file_preview(connector, host, key, fileid, previewfile, previewmetadata):
+def upload_preview(connector, host, key, fileid, previewfile, previewmetadata):
     """Upload preview to Clowder.
 
     Keyword arguments:
@@ -127,7 +127,7 @@ def upload_file_preview(connector, host, key, fileid, previewfile, previewmetada
     return previewid
 
 
-def upload_file_tags(connector, host, key, fileid, tags):
+def upload_tags(connector, host, key, fileid, tags):
     """Upload file tag to Clowder.
 
     Keyword arguments:
@@ -147,7 +147,7 @@ def upload_file_tags(connector, host, key, fileid, tags):
     result.raise_for_status()
 
 
-def upload_file_thumbnail(connector, host, key, fileid, thumbnail):
+def upload_thumbnail(connector, host, key, fileid, thumbnail):
     """Upload thumbnail to Clowder.
 
     Keyword arguments:
@@ -180,7 +180,7 @@ def upload_file_thumbnail(connector, host, key, fileid, thumbnail):
     return thumbnailid
 
 
-def upload_file_to_dataset(connector, host, key, datasetid, filepath):
+def upload_to_dataset(connector, host, key, datasetid, filepath):
     """Upload file to existing Clowder dataset.
 
     Keyword arguments:
