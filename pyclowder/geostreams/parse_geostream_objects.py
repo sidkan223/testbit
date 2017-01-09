@@ -22,7 +22,7 @@ def parse_datapoints_from_list(headers,data,geocode,sensor_id,stream_id,site,clo
         if count%300 == 0:
             logging.info(" [pyG.parse_geostream_objects] Posting datapoint " + str(count) + " for " + str(site) + " stream " +str(stream_id))
         count += 1
-    	datapoint = {
+        datapoint = {
             'start_time': data[0][0],
             'end_time': data[0][0],
             'type': 'Feature',
@@ -42,14 +42,13 @@ def parse_datapoints_from_list(headers,data,geocode,sensor_id,stream_id,site,clo
             }
         }
         if owner != None:
-        	datapoint['properties']["owner"] = owner
+            datapoint['properties']["owner"] = owner
         if source != None:
             datapoint['properties']['source'] = source
         if procedures != None:
             datapoint['properties']['procedures'] = procedures
 
-
-        for i in range(len(data[0])):  #why did this start at 1 not zero - looks like solution for a particular source          
+        for i in range(1,len(data[0])): #time is the first parameter which is added above      
             if blocked_headers == None or headers[i] not in blocked_headers:
                 datapoint['properties'][headers[i]] = data[0][i]
 
@@ -63,7 +62,10 @@ def parse_datapoints_from_list(headers,data,geocode,sensor_id,stream_id,site,clo
 
 def parse_single_datapoint(headers,data,start_time,geocode,sensor_id,stream_id,site,clowder_key,clowder_url,owner=None,source=None,procedures=None,blocked_headers=None):
 
-    logging.info(" [pyG.parse_geostream_objects] Posting datapoint for " + str(site) + " stream " +str(stream_id))
+    #logging.info(" [pyG.parse_geostream_objects] Posting datapoint for " + str(site) + " stream " +str(stream_id))
+    if len(headers) != len(data):
+        logging.warning(" [pyG.parser_geostream_objects] length of data and headers don't match - skipping")
+        return
     datapoint = {
         'start_time': start_time,
         'end_time': start_time,
@@ -119,7 +121,7 @@ def parse_sensor(site,pretty_name,geocode,source_id,source_title,network=None):
         "geometry": {
             "type": "point",
             "coordinates": [geocode[1],geocode[0],geocode[2]]
-	}
+    }
     }
     if network != None:
         sensor["properties"]["network"] = network
@@ -137,7 +139,7 @@ def parse_stream(sensor_id,site,pretty_name,geocode,source_id,source_title,netwo
         "geometry": {
             "type": "point",
             "coordinates": [geocode[1],geocode[0],geocode[2]]
-	},
+    },
         "properties": {
             "region": huc_data["huc4"]["code"],
             "huc": huc_data,
@@ -279,7 +281,7 @@ def parse_rdb_to_datapoints(dataIn, sensor, stream):
         }
 
         for j in range(3,len(field_data[0]),2):
-            if field_data[0][j] not in [None,""," ","eqp","ice","***","ICE","Eqp","Fld","Ssn"]:
+            if field_data[0][j] not in [None,""," ","eqp","ice","***","ICE","Eqp","Fld","Ssn","Dis","Ice","Bkw"]:
                 datapoint['properties'][header[j]] = float(field_data[0][j])
                 datapoint['properties'][header[j+1]] = field_data[0][j+1]
         field_data.pop(0)

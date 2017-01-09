@@ -64,13 +64,13 @@ def read_tsv(file_path):
     line_text = ""
 
     for i in range(len(raw_text)):
-        if raw_text[i] != "\r":
+        if raw_text[i] != "\n":
+
             line_text += raw_text[i]
         else:
             if line_text[0] != "#":
                 rows.append(line_text)
             line_text = ""
-
 
     headers = rows.pop(0).split("\t")
 

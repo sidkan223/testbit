@@ -1,4 +1,6 @@
 import logging
+from time import strftime
+
 from pyGeodashboard2.request_json import get_json, post_json
 
 import pprint
@@ -15,7 +17,7 @@ def sensor_create(sensor,site,key,medici):
         sensor_from_medici = sensor_from_medici[0]
         sensor_id = sensor_from_medici['id']
     else:
-        logging.info("POSTing sensor " + str(site) + " to Medici...")
+        logging.info(" [pyG.sensor_stream_create " + strftime('%Y-%m-%d %H:%M:%S') + "] POSTing sensor " + str(site) + " to Medici...")
         sensor_from_medici = post_json(medici + "sensors?key=" + key, sensor)
         if sensor_from_medici:
             sensor_from_medici = get_json(medici + "sensors?geocode=" +
@@ -41,7 +43,6 @@ def stream_create(sensor_id,site,stream,key,medici):
         stream_id = stream_from_medici['id']
     else:
         stream_from_medici = post_json(medici + "streams?key=" +key,stream)
-       
         if stream_from_medici:
             stream_from_medici = get_json(medici + "streams?stream_name=" + str(stream['name']))
             if isinstance(stream_from_medici,list):

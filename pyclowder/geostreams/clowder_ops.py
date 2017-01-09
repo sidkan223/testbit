@@ -9,9 +9,6 @@ import time
 # import greon.config as config
 from pyGeodashboard2.request_json import get_json
 
-
-# clowder_url = config.clowder_url
-
 def update_sensor(clowder_url,site,sensor_id,key):
     logging.debug("Updating sensor with name=" + str(site) + " and id=" + str(sensor_id))
     try:

@@ -52,6 +52,7 @@ def map_names(input_name,input_option=None):
     output_name = None
     if input_option != None:
 # IEPA
+
         if input_name == "Kjeldahl nitrogen":
             if input_option == "Total":
                 output_name = "nitrogen-kjeldahl-total-as-n-mgl"
@@ -67,7 +68,46 @@ def map_names(input_name,input_option=None):
                 output_name = "nitrogen-ammonia-total-as-n-mgl"
             elif input_option == "Dissolved":
                 output_name = "nitrogen-ammonia-dissolved-as-n-mgl"
+
+        # IEPA ADDED 20161107
+        elif input_name == "Inorganic nitrogen (nitrate and nitrite)":
+            if input_option == "Total":
+                output_name = "nitrate-nitrite-inorganic-total-as-n-mgl"
+        elif input_name == "Total suspended solids":
+            if input_option == "":
+                output_name = "suspended-solids-total-mgl"
+        elif input_name == "Volatile suspended solids":
+            if input_option == "":
+                output_name = "volatile-solids-suspended-mgl"
+        elif input_name == "Total volatile solids":
+            if input_option == "":
+                output_name = "volatile-solids-total-mgl"
+        elif input_name == "pH":
+            if input_option == "":
+                output_name = "pH"       
+        elif input_name == "Chlorophyll b":
+            if input_option == "Total":
+                output_name = "chlorophyll-b-ugl"
+        elif input_name == "Chlorophyll c":
+            if input_option == "Total":
+                output_name = "chlorophyll-c-ugl"
+        elif input_name == "Chlorophyll a, corrected for pheophytin":
+            if input_option == "Total":
+                output_name = "chlorophyll-a-corrected-for-pheophytin-ugl"
+        elif input_name == "Chlorophyll a, uncorrected for pheophytin":
+            if input_option == "Total":
+                output_name = "chlorophyll-a-uncorrected-for-pheophytin-ugl"
+        elif input_name == "Alkalinity, total":
+            if input_option == "":
+                output_name = "alkalinity-total-mgl"
+        elif input_name == "Nitrate":
+            if input_option == "Total":
+                output_name = "nitrate-mgl"
+        elif input_name == "Nitrite":
+            if input_option == "Total":
+                output_name = "total-nitrite-mgl"
         else:
+            logging.warning(" [map_names] Not able to map input_name " + input_name + " and " + input_option )
             output_name = copy.copy(input_name)
 
         return output_name                
@@ -156,47 +196,47 @@ def map_names(input_name,input_option=None):
 
 
 # USGS
-    elif input_name[6:] == "00010":
+    elif input_name[-5:] == "00010":
         output_name = "water-temperature-c"
-    elif input_name[6:] == "00010_cd":
+    elif input_name[-8:] == "00010_cd":
         output_name = "water-temperature-c-qc"
-    elif input_name[6:] == "00060":
+    elif input_name[-5:] == "00060":
         output_name = "discharge-ft3s"
-    elif input_name[6:] == "00060_cd":
+    elif input_name[-8:] == "00060_cd":
         output_name = "discharge-ft3s-qc"
-    elif input_name[6:] == "00095":
+    elif input_name[-5:] == "00095":
         output_name = "specific-conductance-uScm"
-    elif input_name[6:] == "00095_cd":
+    elif input_name[-8:] == "00095_cd":
         output_name = "specific-conductance-uScm-qc"
-    elif input_name[6:] == "00300":
+    elif input_name[-5:] == "00300":
         output_name = "dissolved-oxygen-mgl"
-    elif input_name[6:] == "00300_cd":
+    elif input_name[-8:] == "00300_cd":
         output_name = "dissolved-oxygen-mgl-qc"
-    elif input_name[6:] == "00301":
+    elif input_name[-5:] == "00301":
         output_name = "dissolved-oxygen-saturation-pct"
-    elif input_name[6:] == "00301_cd":
+    elif input_name[-8:] == "00301_cd":
         output_name = "dissolved-oxygen-saturation-pct-qc"
-    elif input_name[6:] == "00400":
+    elif input_name[-5:] == "00400":
         output_name = "pH"
-    elif input_name[6:] == "00400_cd":
+    elif input_name[-8:] == "00400_cd":
         output_name = "pH-qc"
-    elif input_name[6:] == "63680":
+    elif input_name[-5:] == "63680":
         output_name = "turbidity-fnu"
-    elif input_name[6:] == "63680_cd":
+    elif input_name[-8:] == "63680_cd":
         output_name = "turbidity-fnu-qc"
-    elif input_name[6:] == "32295":
+    elif input_name[-5:] == "32295":
         output_name = "colored-dissolved-organic-matter-ppbqse"
-    elif input_name[6:] == "32295_cd":
+    elif input_name[-8:] == "32295_cd":
         output_name = "colored-dissolved-organic-matter-ppbqse-qc"
-    elif input_name[6:] == "99133":
+    elif input_name[-5:] == "99133":
         output_name = "nitrate-as-n-mgl"
-    elif input_name[6:] == "99133_cd":
+    elif input_name[-8:] == "99133_cd":
         output_name = "nitrate-as-n-mgl-qc"
-    elif input_name[6:] == "62361":
+    elif input_name[-5:] == "62361":
         output_name = "chlorophyll-ugl"
-    elif input_name[6:] == "62361_cd":
+    elif input_name[-8:] == "62361_cd":
         output_name = "chlorophyll-ugl-qc"
-        
+     
 # FOX RIVER
     elif input_name == "NITROGEN, KJELDAHL, TOTAL, (MG/L AS N)":
         output_name = "nitrogen-kjeldahl-total-as-n-mgl"
@@ -260,6 +300,16 @@ def map_names(input_name,input_option=None):
         output_name = "nitrogen-kjeldahl-dissolved-as-n-mgl" 
     elif input_name == "PHOSPHOROUS, SEDIMENT, SUSPENDED,          PERCENT":
         output_name = "phosphorus-sediment-suspended-pct"
+    elif input_name == "NITROGEN, DISSOLVED (MG/L AS N)":
+        output_name = "nitrogen-dissolved-as-n-mgl"
+    elif input_name == "PHOSPHATE, TOTAL SOLUBLE (MG/L)":
+        output_name = "phosphate-total-soluble-mgl"   
+    elif input_name == "NITROGEN, AMMONIA, BOTTOM DEPOSITS (MG/KG-N)":
+        output_name = "nitrogen-ammonia-bottom-deposits-MgKg"
+    elif input_name == "ORTHO-PHOSPHATE NES ALGAL ASSAY  MG/L":
+        output_name = "ortho-phosphate-nes-algal-assay-mgl"
+    elif input_name == "PHOSPHORUS,SED,BOT,<63,DRY SIEVE,LAB,TOTAL      %":
+        output_name = "phosphorus-sed-bot-<63-dry-sieve-lab-totals-pct"
 
 # TENNESSEE
     elif input_name == "STATION ID":
@@ -306,8 +356,6 @@ def map_names(input_name,input_option=None):
         output_name = "lat"
     elif input_name == "Station Longitude":
         output_name = "long" 
-    # elif input_name == "Kjeldahl nitrogen":
-    #     output_name = "kjeldahl-nitrogen-mgl"
     elif input_name == "Activity Start Zone":
         output_name = "time_zone"   
 
