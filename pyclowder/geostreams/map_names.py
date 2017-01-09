@@ -1,8 +1,8 @@
-import logging
 import copy
-import pprint
+import logging
 
-from pyGeodashboard2.time_transformers import time2utc
+from time_transformers import time2utc
+
 
 # BUILT THIS FUNCTION FOR ILLINOIS EPA STORET DATA
 # THE PARAMETER NAMES COME UNDER THE COLUMN NAME Characteristic Name

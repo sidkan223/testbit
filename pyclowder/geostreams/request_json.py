@@ -1,7 +1,8 @@
-import requests
 import json
 import logging
 import time
+
+import requests
 
 
 def get_json(url):

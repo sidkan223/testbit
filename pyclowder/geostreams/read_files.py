@@ -1,8 +1,8 @@
-from openpyxl import Workbook
-from openpyxl import load_workbook
 import datetime
 import logging
-import pprint
+
+from openpyxl import load_workbook
+
 
 def read_xlsx(file_path):
     logging.info("[pyG.read_files] Loading " + str(file_path))

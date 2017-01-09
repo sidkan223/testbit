@@ -3,13 +3,11 @@
 import logging
 from dateutil.parser import parse
 
-from src.request_data.request_json import get_json, post_json
+from request_json import get_json, post_json
 
-import src.config.config as config
-
-medici = config.medici['url']
-key = config.medici['key']
-search_clowder_start_date = config.dates['search_clowder_start']
+medici = "clowder url"
+key = "clowder key"
+search_clowder_start_date = ""
 
 def last_datapoint(sensor_from_medici, stream_from_medici):
     latest_datapoint = None

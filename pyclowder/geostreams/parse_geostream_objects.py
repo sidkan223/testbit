@@ -1,10 +1,9 @@
-import pprint
 import logging
 import time
 
-from pyGeodashboard2.request_json import post_json, get_json
-from pyGeodashboard2.map_names import map_names
-from pyGeodashboard2.time_transformers import time_transform
+from request_json import post_json, get_json
+from map_names import map_names
+from time_transformers import time_transform
 
 """
 Don't know why parsing datapoints posts datapoint and parser sensors and streams does not.

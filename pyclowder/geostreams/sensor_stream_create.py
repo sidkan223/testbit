@@ -1,9 +1,6 @@
 import logging
 from time import strftime
-
-from pyGeodashboard2.request_json import get_json, post_json
-
-import pprint
+from request_json import get_json, post_json
 
 def sensor_create(sensor,site,key,medici):
     sensor_id = None

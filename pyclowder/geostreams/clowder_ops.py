@@ -1,15 +1,14 @@
 import logging
-from dateutil.parser import parse
-from dateutil.relativedelta import relativedelta
-from dateutil import tz, parser
-from datetime import date, datetime
+from datetime import datetime
+
 import requests
-import time
+from dateutil import parser
+from dateutil.relativedelta import relativedelta
 
-# import greon.config as config
-from pyGeodashboard2.request_json import get_json
+from request_json import get_json
 
-def update_sensor(clowder_url,site,sensor_id,key):
+
+def update_sensor(clowder_url, site,sensor_id, key):
     logging.debug("Updating sensor with name=" + str(site) + " and id=" + str(sensor_id))
     try:
         url = clowder_url + "sensors/" + str(sensor_id) + "/update?key=" + str(key)
