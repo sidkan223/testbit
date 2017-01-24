@@ -1,22 +1,21 @@
-# FUNCTION GETS LATEST DATAPOINT IN CLOWDER FOR A GIVEN STREAM (SENSOR)
-
 import logging
 from dateutil.parser import parse
 
 from request_json import get_json, post_json
 
-medici = "clowder url"
-key = "clowder key"
-search_clowder_start_date = ""
-
 def last_datapoint(sensor_from_medici, stream_from_medici):
+    """Get latest datapoint for a given stream without relying on the stats."""
+    global clowder_host, clowder_key
+    search_clowder_start_date = ""
     latest_datapoint = None
-    logging.info("Getting datapoints from Clowder at: " + medici + "datapoints?stream_id=" + str(stream_from_medici['id']) + "&since=" + str(search_clowder_start_date))
+    logging.info("Getting datapoints from Clowder at: " + clowder_host + "datapoints?stream_id=" + str(
+        stream_from_medici['id']) + "&since=" + str(search_clowder_start_date))
 
-    datapoints_from_medici = get_json(medici + "datapoints?stream_id=" + str(stream_from_medici['id']) + "&since=" + str(search_clowder_start_date))
+    datapoints_from_medici = get_json(
+        clowder_host + "datapoints?stream_id=" + str(stream_from_medici['id']) + "&since=" + str(search_clowder_start_date))
     logging.info("Done getting datapoints from Clowder")
 
-    if isinstance(datapoints_from_medici, list) and len(datapoints_from_medici) >0:
+    if isinstance(datapoints_from_medici, list) and len(datapoints_from_medici) > 0:
         latest_datapoint = datapoints_from_medici[-1]
         start_date = parse(latest_datapoint['start_time']).strftime('%Y-%m-%d-%H-%M')
         logging.info("Fetched datapoints for " + sensor_from_medici['name'] + " starting on " + start_date)
