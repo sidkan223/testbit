@@ -419,6 +419,9 @@ class Connector(object):
         self.status_update(pyclowder.utils.StatusMessage.processing, resource, "Resubmitting message (attempt #%s)"
                            % retry_count)
 
+    def message_redirect(self, resource, target):
+        self.status_update(pyclowder.utils.StatusMessage.processing, resource, "Forwarding message onto %s"
+                           % target)
 
 # pylint: disable=too-many-instance-attributes
 class RabbitMQConnector(Connector):
@@ -611,6 +614,13 @@ class RabbitMQHandler(Connector):
                                       body=json.dumps(jbody))
                 channel.basic_ack(self.method.delivery_tag)
 
+            elif msg["type"] == 'redirect':
+                properties = pika.BasicProperties(delivery_mode=2)
+                channel.basic_publish(exchange=self.method.exchange,
+                                      routing_key=msg["target"],
+                                      properties=properties,
+                                      body=self.body)
+
     def status_update(self, status, resource, message):
         super(RabbitMQHandler, self).status_update(status, resource, message)
         status_report = dict()
@@ -635,6 +645,10 @@ class RabbitMQHandler(Connector):
     def message_resubmit(self, resource, retry_count):
         super(RabbitMQHandler, self).message_resubmit(resource, retry_count)
         self.messages.append({"type": "resubmit", "retry_count": retry_count})
+
+    def message_redirect(self, resource, target):
+        super(RabbitMQHandler, self).message_redirect(resource, target)
+        self.messages.append({"type": "redirect", "target": target})
 
 
 class HPCConnector(Connector):
@@ -688,3 +702,9 @@ class HPCConnector(Connector):
             except:
                 logger.exception("Error: unable to write extractor status to log file")
                 raise
+
+    def message_resubmit(self, resource, retry_count):
+        raise NotImplementedError("Resubmit not available using HPCConnector")
+
+    def message_redirect(self, resource, target):
+        raise NotImplementedError("Redirect not available using HPCConnector")
