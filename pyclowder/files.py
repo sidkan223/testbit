@@ -235,7 +235,7 @@ def upload_thumbnail(connector, host, key, fileid, thumbnail):
     return thumbnailid
 
 
-def upload_to_dataset(connector, host, key, datasetid, filepath):
+def upload_to_dataset(connector, host, key, datasetid, filepath, check_duplicate=False):
     """Upload file to existing Clowder dataset.
 
     Keyword arguments:
@@ -244,9 +244,17 @@ def upload_to_dataset(connector, host, key, datasetid, filepath):
     key -- the secret key to login to clowder
     datasetid -- the dataset that the file should be associated with
     filepath -- path to file
+    check_duplicate -- check if filename already exists in dataset and skip upload if so
     """
 
     logger = logging.getLogger(__name__)
+
+    if check_duplicate:
+        ds_files = pyclowder.datasets.get_file_list(connector, host, key, datasetid)
+        for f in ds_files:
+            if f['filename'] == os.path.basename(filepath):
+                logger.debug("found %s in dataset %s; not re-uploading" % (f['filename'], datasetid))
+                return
 
     for source_path in connector.mounted_paths:
         if filepath.startswith(connector.mounted_paths[source_path]):
