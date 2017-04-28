@@ -7,6 +7,7 @@
 import requests
 import logging
 import json
+import time
 
 
 class ClowderClient(object):
@@ -15,7 +16,8 @@ class ClowderClient(object):
 
     The `path` parameter used by many of the methods in this class call a specific path relative to the host + "api".
     For example passing in "/version" for host "https://seagrant-dev.ncsa.illinois.edu/clowder/" will call
-    "https://seagrant-dev.ncsa.illinois.edu/clowder/api/version".
+    "https://seagrant-dev.ncsa.illinois.edu/clowder/api/version". Make sure to include the slash at the beginning of the
+    fragment.
     """
     logger = logging.getLogger(__name__)
     api_fragment = "/api"
@@ -57,13 +59,13 @@ class ClowderClient(object):
         """
         Call HTTP GET against `path`. This version returns a JSON object.
 
-
         :param path: Endpoint path relative to Clowder api.
-        :return: JSON-encoded content of the response.
+        :return: JSON from body of response
+        :rtype: JSON
         :raises: `requests.HTTPError`
         """
         url = self.host + self.api_fragment + path
-        r = requests.get(url)
+        r = requests.get(url, headers=self.headers)
         r.raise_for_status()
         return r.json()
 
@@ -72,22 +74,130 @@ class ClowderClient(object):
         Call HTTP GET against `path`. This version returns a `requests.Response` object.
 
         :param path: Endpoint path relative to Clowder api.
-        :return: `requests.Response` so that we can check status on it and then retrieve the JSON content of the response.
+        :return: Full response object so that we can check status on it and then retrieve the JSON body.
+        :rtype: `requests.Response`
         :raises: `requests.HTTPError`
         """
         url = self.host + self.api_fragment + path
         try:
-            return requests.get(url)
+            return requests.get(url, headers=self.headers)
         except Exception as e:
-            self.logger.error("GET %s: %s", url, e.message)
+            logging.error("Error calling GET url %s" % url, e.message)
+
+    def get_retry(self, path):
+        """
+        Call HTTP GET against `path`. This version returns a `requests.Response` object. Useful in case of temporary
+        network issues.
+
+        :param path: Endpoint path relative to Clowder api.
+        :return: Full response object so that we can check status on it and then retrieve the JSON body.
+        :rtype: `requests.Response`
+        :raises: `requests.HTTPError`
+        """
+        url = self.host + self.api_fragment + path
+        count = 0
+        while True:
+            try:
+                if count > self.max_retries:
+                    return None
+                r = requests.get(url, headers=self.headers)
+                count += 1
+                if r.status_code == 200:
+                    return r.json()
+                else:
+                    logging.warning("Error calling GET url %s" % url)
+                    logging.warning("Waiting %i seconds and will try again" % self.call_timeout)
+                    time.sleep(self.call_timeout)
+            except Exception as e:
+                logging.error("Error calling GET url %s" % url, e.message)
 
     def post(self, path, content):
+        """
+        Call HTTP POST against `path` with `content` in body.
+
+        :param path: Endpoint path relative to Clowder api.
+        :param content: Content to send as the body of the request.
+        :return: Full response object so that we can check status on it and then retrieve the JSON body.
+        :rtype: `requests.Response`
+        :raises: `requests.HTTPError`
+        """
         url = self.host + self.api_fragment + path
+        params = {'key': self.key}
         try:
-            return requests.post(url, data=json.dumps(content), headers=self.headers)
+            return requests.post(url, params=params, data=json.dumps(content), headers=self.headers)
         except Exception as e:
             self.logger.error("GET %s: %s", url, e.message)
 
+    def post_retry(self, path, content):
+        """
+        Call HTTP POST against `path` with `content` in body. Retry up to a certain number of times if necessary. Useful
+        in case of temporary network issues.
+
+        :param path: Endpoint path relative to Clowder api.
+        :param content: Content to send as the body of the request.
+        :return: Full response object so that we can check status on it and then retrieve the JSON body.
+        :rtype: `requests.Response`
+        :raises: `requests.HTTPError`
+        """
+        url = self.host + self.api_fragment + path
+        count = 0
+        while True:
+            try:
+                if count > self.max_retries:
+                    return None
+                r = requests.post(url, data=json.dumps(content), headers=self.headers)
+                count += 1
+                if r.status_code == 200:
+                    return r.json()
+                else:
+                    logging.warning("Error calling POST url %s" % url)
+                    logging.warning("Waiting %i seconds and will try again" % self.call_timeout)
+                    time.sleep(self.call_timeout)
+            except Exception as e:
+                logging.error("Error calling POST url %s" % url, e.message)
 
 
+    def delete(self, path):
+        """
+        Call HTTP DELETE against `path`.
+        
+        TODO don't pass application/json as header
 
+        :param path: Endpoint path relative to Clowder api.
+        :return: Full response object so that we can check status on it and then retrieve the JSON body.
+        :rtype: `requests.Response`
+        :raises: `requests.HTTPError`
+        """
+        url = self.host + self.api_fragment + path
+        params = {'key': self.key}
+        try:
+            return requests.delete(url, params=params)
+        except Exception as e:
+            self.logger.error("DELETE %s: %s", url, e.message)
+
+    def delete_retry(self, path):
+        """
+        Call HTTP DELETE against `path`. Retry up to a certain number of times if necessary. Useful in case of temporary
+        network issues.
+
+        :param path: Endpoint path relative to Clowder api.
+        :return: Full response object so that we can check status on it and then retrieve the JSON body.
+        :rtype: `requests.Response`
+        :raises: `requests.HTTPError`
+        """
+        url = self.host + self.api_fragment + path
+        count = 0
+        while True:
+            try:
+                if count > self.max_retries:
+                    return None
+                r = requests.delete(url, headers=self.headers)
+                count += 1
+                if r.status_code == 200:
+                    return r.json()
+                else:
+                    logging.warning("Error calling DELETE url %s" % url)
+                    logging.warning("Waiting %i seconds and will try again" % self.call_timeout)
+                    time.sleep(self.call_timeout)
+            except Exception as e:
+                logging.error("Error calling DELETE url %s" % url, e.message)

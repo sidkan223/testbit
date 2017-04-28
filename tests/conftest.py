@@ -2,14 +2,14 @@ import pytest
 
 
 def pytest_addoption(parser):
-    parser.addoption("--host", action="store", default="http://localhost:8080/clowder",
+    parser.addoption("--host", action="store", default="http://localhost:9000/clowder",
                      help="Host, including protocol and port. ")
-    parser.addoption("--username", action="store", default="alice",
-                     help="Username: Either from crowd or application.conf depending how fence was setup")
-    parser.addoption("--password", action="store", default="fred",
-                     help="Password: Either from crowd or application.conf depending how fence was setup")
+    parser.addoption("--username", action="store",
+                     help="Clowder username")
+    parser.addoption("--password", action="store",
+                     help="Clowder user password")
     parser.addoption("--key", action="store", default="r1ek3rs",
-                     help="API Key")
+                     help="Clowder API Key, use this or username/password combo")
 
 @pytest.fixture(scope="module")
 def host(request):
