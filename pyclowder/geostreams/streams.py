@@ -30,4 +30,29 @@ class StreamsApi(object):
         except Exception as e:
             logging.error("Error retrieving sensor list: %s", e.message)
 
+    def stream_post(self, stream):
+        """
+        Create stream.
+
+        :return: If successful or not.
+        :rtype: `requests.Response`
+        """
+        logging.debug("Adding stream")
+        try:
+            return self.client.post("/geostreams/streams", stream)
+        except Exception as e:
+            logging.error("Error adding datapoint %s" % stream, e.message)
+
+    def stream_delete(self, stream_id):
+        """
+        Delete a specific stream by id.
+
+        :return: If successfull or not.
+        :rtype: `requests.Response`
+        """
+        logging.debug("Getting stream %s" % stream_id)
+        try:
+            return self.client.delete("/geostreams/streams/%s" % stream_id)
+        except Exception as e:
+            logging.error("Error retrieving sensor %s" % stream_id, e.message)
 

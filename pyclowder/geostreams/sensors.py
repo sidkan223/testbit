@@ -44,7 +44,7 @@ class SensorsApi(object):
             logging.error("Error retrieving sensor %s" % sensor_id, e.message)
 
 
-    def sensors_post(self, sensor):
+    def sensor_post(self, sensor):
         """
         Create sensor.
 
@@ -71,7 +71,7 @@ class SensorsApi(object):
         except Exception as e:
             logging.error("Error retrieving sensor %s" % sensor_id, e.message)
 
-    def sensors_create_json(self, name, longitude, latitude, elevation):
+    def sensor_create_json(self, name, longitude, latitude, elevation, popupContent, region):
         """Create sensor definition in JSON"""
         sensor = {
             "name": name,
@@ -86,7 +86,8 @@ class SensorsApi(object):
             },
             "properties": {
                 "name": name,
-                "popupContent": name
+                "popupContent": popupContent,
+                "region": region
             }
         }
         return sensor
