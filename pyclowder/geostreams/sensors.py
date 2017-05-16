@@ -102,7 +102,7 @@ class SensorsApi(object):
         logging.debug("Updating sensor statistics")
         try:
             # TODO this should be a PUT on the API side, not a GET
-            return self.client.get("/geostreams/sensors/%s/update" % sensor_id)
+            return self.client.get_auth("/geostreams/sensors/%s/update" % sensor_id)
         except Exception as e:
             logging.error("Error updating sensor statistics for sensor %s: %s" % sensor_id, e.message)
 

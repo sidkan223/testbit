@@ -84,6 +84,21 @@ class ClowderClient(object):
         except Exception as e:
             logging.error("Error calling GET url %s" % url, e.message)
 
+    def get_auth(self, path):
+        """
+        Call HTTP GET against `path`. This version returns a `requests.Response` object.
+
+        :param path: Endpoint path relative to Clowder api.
+        :return: Full response object so that we can check status on it and then retrieve the JSON body.
+        :rtype: `requests.Response`
+        :raises: `requests.HTTPError`
+        """
+        url = self.host + self.api_fragment + path
+        try:
+            return requests.get(url, headers=self.headers, auth=(self.username, self.password))
+        except Exception as e:
+            logging.error("Error calling GET url %s" % url, e.message)
+
     def get_retry(self, path):
         """
         Call HTTP GET against `path`. This version returns a `requests.Response` object. Useful in case of temporary
