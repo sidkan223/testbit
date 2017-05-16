@@ -124,9 +124,26 @@ class ClowderClient(object):
         url = self.host + self.api_fragment + path
         params = {'key': self.key}
         try:
-            return requests.post(url, params=params, data=json.dumps(content), headers=self.headers)
+            return requests.post(url, params=params, data=json.dumps(content), headers=self.headers, auth=(self.username, self.password))
         except Exception as e:
             self.logger.error("GET %s: %s", url, e.message)
+
+    def post_file(self, path, filename):
+        """
+        Call HTTP POST against `path` with `content` in body.
+
+        :param path: Endpoint path relative to Clowder api.
+        :param content: Content to send as the body of the request.
+        :return: Full response object so that we can check status on it and then retrieve the JSON body.
+        :rtype: `requests.Response`
+        :raises: `requests.HTTPError`
+        """
+        url = self.host + self.api_fragment + path
+        params = {'key': self.key}
+        try:
+            return requests.post(url, params=params, files={"File": open(filename, 'rb')}, headers=self.headers, auth=(self.username, self.password))
+        except Exception as e:
+            self.logger.error("POST %s: %s", url, e.message)
 
     def post_retry(self, path, content):
         """
@@ -171,7 +188,7 @@ class ClowderClient(object):
         url = self.host + self.api_fragment + path
         params = {'key': self.key}
         try:
-            return requests.delete(url, params=params)
+            return requests.delete(url, params=params, auth=(self.username, self.password))
         except Exception as e:
             self.logger.error("DELETE %s: %s", url, e.message)
 

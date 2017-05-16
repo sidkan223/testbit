@@ -65,7 +65,7 @@ class SensorsApi(object):
         :return: If successfull or not.
         :rtype: `requests.Response`
         """
-        logging.debug("Getting sensor %s" % sensor_id)
+        logging.debug("Deleting sensor %s" % sensor_id)
         try:
             return self.client.delete("/geostreams/sensors/%s" % sensor_id)
         except Exception as e:
@@ -92,7 +92,7 @@ class SensorsApi(object):
         }
         return sensor
 
-    def sensor_statistics_post(self, site, sensor_id, key):
+    def sensor_statistics_post(self, sensor_id):
         """
         Update sensor statistics.
 

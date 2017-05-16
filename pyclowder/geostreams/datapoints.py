@@ -18,7 +18,7 @@ class DatapointsApi(object):
         else:
             self.client = ClowderClient(host=host, key=key, username=username, password=password)
 
-    def datapoints_post(self, datapoint):
+    def datapoint_post(self, datapoint):
         """
         Add a datapoint.
 

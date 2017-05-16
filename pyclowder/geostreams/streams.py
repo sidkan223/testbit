@@ -30,6 +30,27 @@ class StreamsApi(object):
         except Exception as e:
             logging.error("Error retrieving sensor list: %s", e.message)
 
+    def sensor_create_json(self, name, longitude, latitude, elevation, popupContent, region):
+        """Create sensor definition in JSON"""
+        sensor = {
+            "name": name,
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    longitude,
+                    latitude,
+                    elevation
+                ]
+            },
+            "properties": {
+                "name": name,
+                "popupContent": popupContent,
+                "region": region
+            }
+        }
+        return sensor
+
     def stream_post(self, stream):
         """
         Create stream.
@@ -50,7 +71,7 @@ class StreamsApi(object):
         :return: If successfull or not.
         :rtype: `requests.Response`
         """
-        logging.debug("Getting stream %s" % stream_id)
+        logging.debug("Deleting stream %s" % stream_id)
         try:
             return self.client.delete("/geostreams/streams/%s" % stream_id)
         except Exception as e:
