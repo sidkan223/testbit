@@ -41,7 +41,7 @@ class SensorsApi(object):
         try:
             return self.client.get("/geostreams/sensors/%s" % sensor_id)
         except Exception as e:
-            logging.error("Error retrieving sensor %s" % sensor_id, e.message)
+            logging.error("Error retrieving sensor %s: %s" % sensor_id, e.message)
 
 
     def sensor_post(self, sensor):
@@ -69,7 +69,7 @@ class SensorsApi(object):
         try:
             return self.client.delete("/geostreams/sensors/%s" % sensor_id)
         except Exception as e:
-            logging.error("Error retrieving sensor %s" % sensor_id, e.message)
+            logging.error("Error retrieving sensor %s: %s" % sensor_id, e.message)
 
     def sensor_create_json(self, name, longitude, latitude, elevation, popupContent, region):
         """Create sensor definition in JSON"""

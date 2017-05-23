@@ -29,7 +29,7 @@ class DatapointsApi(object):
         try:
             return self.client.post("/geostreams/datapoints", datapoint)
         except Exception as e:
-            logging.error("Error adding datapoint %s" % datapoint, e.message)
+            logging.error("Error adding datapoint %s: %s" % datapoint, e.message)
 
     def datapoints_count_by_sensor_get(self, sensor_id):
         """
@@ -42,7 +42,7 @@ class DatapointsApi(object):
         try:
             return self.client.get("/geostreams/datapoints?sensor_id=%s&onlyCount=true" % sensor_id)
         except Exception as e:
-            logging.error("Error counting datapoints by sensor: %s" % sensor_id, e.message)
+            logging.error("Error counting datapoints by sensor %s: %s" % sensor_id, e.message)
 
     def datapoint_latest_get(self, sensor_id, stream_id, since):
         """

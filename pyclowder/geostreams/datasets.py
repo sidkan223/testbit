@@ -41,7 +41,7 @@ class DatasetsApi(object):
         try:
             return self.client.get("/datasets/%s" % dataset_id)
         except Exception as e:
-            logging.error("Error retrieving dataset %s" % dataset_id, e.message)
+            logging.error("Error retrieving dataset %s: %s" % dataset_id, e.message)
 
 
     def create_empty(self, dataset):
@@ -55,7 +55,7 @@ class DatasetsApi(object):
         try:
             return self.client.post("/datasets/createempty", dataset)
         except Exception as e:
-            logging.error("Error adding datapoint %s" % dataset, e.message)
+            logging.error("Error adding datapoint %s: %s" % dataset, e.message)
 
 
     def dataset_delete(self, dataset_id):
@@ -69,7 +69,7 @@ class DatasetsApi(object):
         try:
             return self.client.delete("/datasets/%s" % dataset_id)
         except Exception as e:
-            logging.error("Error retrieving dataset %s" % dataset_id, e.message)
+            logging.error("Error retrieving dataset %s: %s" % dataset_id, e.message)
 
     def upload_file(self, dataset_id, file):
         """
@@ -82,7 +82,7 @@ class DatasetsApi(object):
         try:
             return self.client.post_file("/uploadToDataset/%s" % dataset_id, file)
         except Exception as e:
-            logging.error("Error upload to dataset %s" % dataset_id, e.message)
+            logging.error("Error upload to dataset %s: %s" % dataset_id, e.message)
 
     def update_metadata(self, dataset_id, metadata):
         """
@@ -95,4 +95,4 @@ class DatasetsApi(object):
         try:
             return self.client.post_file('datasets/%s/metadata?key=%s' % dataset_id, metadata)
         except Exception as e:
-            logging.error("Error upload to dataset %s" % dataset_id, e.message)
+            logging.error("Error upload to dataset %s: %s" % dataset_id, e.message)

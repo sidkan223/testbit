@@ -94,8 +94,10 @@ class ClowderClient(object):
         :raises: `requests.HTTPError`
         """
         url = self.host + self.api_fragment + path
+        params = {'key': self.key}
+
         try:
-            return requests.get(url, headers=self.headers, auth=(self.username, self.password))
+            return requests.get(url, params=params, headers=self.headers, auth=(self.username, self.password))
         except Exception as e:
             logging.error("Error calling GET url %s" % url, e.message)
 
@@ -145,7 +147,7 @@ class ClowderClient(object):
 
     def post_file(self, path, filename):
         """
-        Call HTTP POST against `path` with `content` in body.
+        Call HTTP POST against `path` with `content` in body. Header with content-type is not required.
 
         :param path: Endpoint path relative to Clowder api.
         :param content: Content to send as the body of the request.
@@ -153,10 +155,11 @@ class ClowderClient(object):
         :rtype: `requests.Response`
         :raises: `requests.HTTPError`
         """
+
         url = self.host + self.api_fragment + path
         params = {'key': self.key}
         try:
-            return requests.post(url, params=params, files={"File": open(filename, 'rb')}, headers=self.headers, auth=(self.username, self.password))
+            return requests.post(url, params=params, files={"File": open(filename, 'rb')}, auth=(self.username, self.password))
         except Exception as e:
             self.logger.error("POST %s: %s", url, e.message)
 

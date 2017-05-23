@@ -21,35 +21,16 @@ class StreamsApi(object):
         """
         Get the list of all available streams.
 
-        :return: Full list of sensors.
+        :return: Full list of streams.
         :rtype: `requests.Response`
         """
         logging.debug("Getting all streams")
         try:
             return self.client.get("/geostreams/streams")
         except Exception as e:
-            logging.error("Error retrieving sensor list: %s", e.message)
+            logging.error("Error retrieving stream list: %s", e.message)
 
-    def sensor_create_json(self, name, longitude, latitude, elevation, popupContent, region):
-        """Create sensor definition in JSON"""
-        sensor = {
-            "name": name,
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    longitude,
-                    latitude,
-                    elevation
-                ]
-            },
-            "properties": {
-                "name": name,
-                "popupContent": popupContent,
-                "region": region
-            }
-        }
-        return sensor
+
 
     def stream_post(self, stream):
         """
@@ -62,7 +43,7 @@ class StreamsApi(object):
         try:
             return self.client.post("/geostreams/streams", stream)
         except Exception as e:
-            logging.error("Error adding datapoint %s" % stream, e.message)
+            logging.error("Error adding stream %s: %s" % stream, e.message)
 
     def stream_delete(self, stream_id):
         """
@@ -75,5 +56,5 @@ class StreamsApi(object):
         try:
             return self.client.delete("/geostreams/streams/%s" % stream_id)
         except Exception as e:
-            logging.error("Error retrieving sensor %s" % stream_id, e.message)
+            logging.error("Error retrieving stream %s: %s" % stream_id, e.message)
 
