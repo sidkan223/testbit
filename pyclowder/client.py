@@ -82,7 +82,7 @@ class ClowderClient(object):
         try:
             return requests.get(url, headers=self.headers)
         except Exception as e:
-            logging.error("Error calling GET url %s" % url, e.message)
+            logging.error("Error calling GET url %s: %s" % url, e.message)
 
     def get_auth(self, path):
         """
@@ -99,7 +99,7 @@ class ClowderClient(object):
         try:
             return requests.get(url, params=params, headers=self.headers, auth=(self.username, self.password))
         except Exception as e:
-            logging.error("Error calling GET url %s" % url, e.message)
+            logging.error("Error calling GET url %s: %s" % url, e.message)
 
     def get_retry(self, path):
         """
@@ -126,7 +126,7 @@ class ClowderClient(object):
                     logging.warning("Waiting %i seconds and will try again" % self.call_timeout)
                     time.sleep(self.call_timeout)
             except Exception as e:
-                logging.error("Error calling GET url %s" % url, e.message)
+                logging.error("Error calling GET url %s: %s" % url, e.message)
 
     def post(self, path, content):
         """
@@ -143,7 +143,7 @@ class ClowderClient(object):
         try:
             return requests.post(url, params=params, data=json.dumps(content), headers=self.headers, auth=(self.username, self.password))
         except Exception as e:
-            self.logger.error("GET %s: %s", url, e.message)
+            self.logger.error("POST %s: %s", url, e.message)
 
     def post_file(self, path, filename):
         """
@@ -161,7 +161,7 @@ class ClowderClient(object):
         try:
             return requests.post(url, params=params, files={"File": open(filename, 'rb')}, auth=(self.username, self.password))
         except Exception as e:
-            self.logger.error("POST %s: %s", url, e.message)
+            self.logger.error("POST %s: %s", (url, e.message))
 
     def post_retry(self, path, content):
         """
@@ -189,7 +189,7 @@ class ClowderClient(object):
                     logging.warning("Waiting %i seconds and will try again" % self.call_timeout)
                     time.sleep(self.call_timeout)
             except Exception as e:
-                logging.error("Error calling POST url %s" % url, e.message)
+                logging.error("Error calling POST url %s: %s" % url, e.message)
 
 
     def delete(self, path):
@@ -235,4 +235,4 @@ class ClowderClient(object):
                     logging.warning("Waiting %i seconds and will try again" % self.call_timeout)
                     time.sleep(self.call_timeout)
             except Exception as e:
-                logging.error("Error calling DELETE url %s" % url, e.message)
+                logging.error("Error calling DELETE url %s: %s" % url, e.message)

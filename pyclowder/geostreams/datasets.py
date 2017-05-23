@@ -41,10 +41,9 @@ class DatasetsApi(object):
         try:
             return self.client.get("/datasets/%s" % dataset_id)
         except Exception as e:
-            logging.error("Error retrieving dataset %s: %s" % dataset_id, e.message)
+            logging.error("Error retrieving dataset %s: %s" % (dataset_id, e.message))
 
-
-    def create_empty(self, dataset):
+    def create_empty(self, dataset_id):
         """
         Create dataset.
 
@@ -53,10 +52,9 @@ class DatasetsApi(object):
         """
         logging.debug("Adding dataset")
         try:
-            return self.client.post("/datasets/createempty", dataset)
+            return self.client.post("/datasets/createempty", dataset_id)
         except Exception as e:
-            logging.error("Error adding datapoint %s: %s" % dataset, e.message)
-
+            logging.error("Error adding datapoint %s: %s" % (dataset_id, e.message))
 
     def dataset_delete(self, dataset_id):
         """
@@ -69,7 +67,7 @@ class DatasetsApi(object):
         try:
             return self.client.delete("/datasets/%s" % dataset_id)
         except Exception as e:
-            logging.error("Error retrieving dataset %s: %s" % dataset_id, e.message)
+            logging.error("Error retrieving dataset %s: %s" % (dataset_id, e.message))
 
     def upload_file(self, dataset_id, file):
         """
@@ -82,17 +80,19 @@ class DatasetsApi(object):
         try:
             return self.client.post_file("/uploadToDataset/%s" % dataset_id, file)
         except Exception as e:
-            logging.error("Error upload to dataset %s: %s" % dataset_id, e.message)
+            logging.error("Error upload to dataset %s: %s" % (dataset_id, e.message))
 
-    def update_metadata(self, dataset_id, metadata):
+    def add_metadata(self, dataset_id, metadata):
         """
-        Add a file to a dataset.
+        Add a file to a dataset
 
         :return: If successfull or not.
         :rtype: `requests.Response`
         """
+
         logging.debug("Update metadata of dataset %s" % dataset_id)
         try:
-            return self.client.post_file('datasets/%s/metadata?key=%s' % dataset_id, metadata)
-        except Exception as e:
-            logging.error("Error upload to dataset %s: %s" % dataset_id, e.message)
+            return self.client.post("/datasets/%s/metadata" % dataset_id, metadata)
+        except Exception:
+            logging.error("Error upload to dataset %s: %s" % (dataset_id, e.message))
+
