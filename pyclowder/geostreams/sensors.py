@@ -6,6 +6,7 @@
 
 from pyclowder.client import ClowderClient
 import logging
+from request_json import get_json
 
 
 class SensorsApi(object):
@@ -106,3 +107,7 @@ class SensorsApi(object):
         except Exception as e:
             logging.error("Error updating sensor statistics for sensor %s: %s" % sensor_id, e.message)
 
+    def sensor_get_huc(self,latitude,longitude):
+        huc_url = "http://gltg.ncsa.illinois.edu/api/huc?lat=" + str(latitude) + "&lng=" + str(longitude)
+        huc_data = get_json(huc_url)
+        return huc_data
