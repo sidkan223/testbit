@@ -140,6 +140,7 @@ class ClowderClient(object):
         """
         url = self.host + self.api_fragment + path
         params = {'key': self.key}
+
         try:
             return requests.post(url, params=params, data=json.dumps(content), headers=self.headers, auth=(self.username, self.password))
         except Exception as e:
