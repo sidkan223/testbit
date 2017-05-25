@@ -114,12 +114,14 @@ class SensorsApi(object):
         }
         if huc:
             sensor["properties"]["huc"] = huc
-        if network:
-            sensor['properties']['network'] = network
-        if id:
-            sensor['properties']['id'] = id
-        if title:
-            sensor['properties']['title'] = title
+        if network or id or title:
+            sensor['properties']['type'] ={}
+            if network:
+                sensor['properties']['type']['network'] = network
+            if id:
+                sensor['properties']['type']['id'] = id
+            if title:
+                sensor['properties']['type']['title'] = title
         return sensor
 
     def sensor_statistics_post(self, sensor_id):
