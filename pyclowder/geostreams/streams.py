@@ -66,7 +66,7 @@ class StreamsApi(object):
 
         else:
             logging.info("Found stream " + stream['name'])
-            return stream_from_clowder
+            return stream_from_clowder[0]
 
 
 
