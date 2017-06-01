@@ -6,6 +6,7 @@
 
 from pyclowder.client import ClowderClient
 import logging
+from request_json import get_json
 
 
 class SensorsApi(object):
@@ -43,19 +44,40 @@ class SensorsApi(object):
         except Exception as e:
             logging.error("Error retrieving sensor %s: %s" % sensor_id, e.message)
 
+    def sensor_get_by_name(self, sensor_name):
+        """
+        Get a specific sensor by id.
+
+        :return: Sensor object as JSON.
+        :rtype: `requests.Response`
+        """
+        logging.debug("Getting sensor %s" % sensor_name)
+        try:
+            return self.client.get("/geostreams/sensors?sensor_name=" + sensor_name)
+        except Exception as e:
+            logging.error("Error retrieving sensor %s: %s" % sensor_name, e.message)
+            return None
 
     def sensor_post(self, sensor):
         """
         Create sensor.
 
-        :return: If successful or not.
+        :return: sensor json.
         :rtype: `requests.Response`
         """
-        logging.debug("Adding sensor")
+        logging.debug("Adding or getting sensor")
         try:
-            return self.client.post("/geostreams/sensors", sensor)
+            sensor_from_clowder = self.sensor_get_by_name(sensor['name']).json()
+            if not sensor_from_clowder:
+                logging.info("Creating sensor with name: " + sensor['name'])
+                sensor_from_clowder = self.client.post("/geostreams/sensors", sensor)
+                return sensor_from_clowder.json()
+
+            else:
+                logging.info("Found sensor " + sensor['name'])
+                return sensor_from_clowder[0]
         except Exception as e:
-            logging.error("Error adding datapoint %s" % sensor, e.message)
+            logging.error("Error adding sensor %s" % sensor, e.message)
 
 
     def sensor_delete(self, sensor_id):
@@ -71,7 +93,7 @@ class SensorsApi(object):
         except Exception as e:
             logging.error("Error retrieving sensor %s: %s" % sensor_id, e.message)
 
-    def sensor_create_json(self, name, longitude, latitude, elevation, popupContent, region):
+    def sensor_create_json(self, name, longitude, latitude, elevation, popupContent, region, huc=None, network=None, id=None, title=None):
         """Create sensor definition in JSON"""
         sensor = {
             "name": name,
@@ -90,6 +112,16 @@ class SensorsApi(object):
                 "region": region
             }
         }
+        if huc:
+            sensor["properties"]["huc"] = huc
+        if network or id or title:
+            sensor['properties']['type'] ={}
+            if network:
+                sensor['properties']['type']['network'] = network
+            if id:
+                sensor['properties']['type']['id'] = id
+            if title:
+                sensor['properties']['type']['title'] = title
         return sensor
 
     def sensor_statistics_post(self, sensor_id):
@@ -106,3 +138,7 @@ class SensorsApi(object):
         except Exception as e:
             logging.error("Error updating sensor statistics for sensor %s: %s" % sensor_id, e.message)
 
+    def sensor_get_huc(self,latitude,longitude):
+        huc_url = "http://gltg.ncsa.illinois.edu/api/huc?lat=" + str(latitude) + "&lng=" + str(longitude)
+        huc_data = get_json(huc_url)
+        return huc_data

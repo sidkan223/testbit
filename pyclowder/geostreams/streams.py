@@ -6,6 +6,8 @@
 
 from pyclowder.client import ClowderClient
 import logging
+import pprint
+import json
 
 
 class StreamsApi(object):
@@ -31,19 +33,41 @@ class StreamsApi(object):
             logging.error("Error retrieving stream list: %s", e.message)
 
 
+    def stream_get_by_name(self, stream_name):
+        """
+        Get a specific stream by id.
+
+        :return: stream object as JSON.
+        :rtype: `requests.Response`
+        """
+        logging.debug("Getting stream %s" % stream_name)
+        stream = self.client.get("/geostreams/streams?stream_name=" + stream_name).json()
+        if 'status' in stream and stream['status'] == "No data found":
+            return None
+        else:
+            return stream
+
 
     def stream_post(self, stream):
         """
         Create stream.
 
-        :return: If successful or not.
+        :return: stream json.
         :rtype: `requests.Response`
         """
-        logging.debug("Adding stream")
-        try:
-            return self.client.post("/geostreams/streams", stream)
-        except Exception as e:
-            logging.error("Error adding stream %s: %s" % stream, e.message)
+        logging.debug("Adding or getting stream")
+
+        stream_from_clowder = self.stream_get_by_name(stream['name'])
+
+        if stream_from_clowder is None:
+            logging.info("Creating stream with name: " + stream['name'])
+            stream_from_clowder = self.client.post("/geostreams/streams", stream)
+            return stream_from_clowder.json()
+
+        else:
+            logging.info("Found stream " + stream['name'])
+            return stream_from_clowder[0]
+
 
     def stream_delete(self, stream_id):
         """
@@ -57,4 +81,17 @@ class StreamsApi(object):
             return self.client.delete("/geostreams/streams/%s" % stream_id)
         except Exception as e:
             logging.error("Error retrieving stream %s: %s" % stream_id, e.message)
+
+
+    def stream_create_json_from_sensor(self,sensor):
+        stream = {
+            "sensor_id": str(sensor["id"]),
+            "name": sensor["name"],
+            "type": sensor["type"],
+            "geometry": sensor["geometry"],
+            "properties": sensor["properties"]
+        }
+
+        return stream
+
 

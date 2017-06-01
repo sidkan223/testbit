@@ -4,6 +4,8 @@ import logging
 
 def map_names(input_name, input_option=None):
     # FIXME load mapping from yaml file
+    print "****", input_name,
+    print "****", input_option
     output_name = None
     if input_option != None:
         # IEPA
@@ -318,7 +320,32 @@ def map_names(input_name, input_option=None):
     elif input_name == "sea_water_temperature":
         output_name = "water-temperature-c"
 
+    #IWQIS
+    elif input_name == "nitrate_con-iwqis":
+        output_name = "nitrate-nitrite-as-n-mgl"
+    elif input_name == "discharge-iwqis":
+        output_name = "discharge-ft3s"
+    elif input_name == "diss_oxy_con-iwqis":
+        output_name = "dissolved-oxygen-mgl"
+    elif input_name == "turbi_mean-iwqis":
+        output_name = "turbidity-ntu"
+    elif input_name == "temp_water-iwqis":
+        output_name = "temperature-c"
+    elif input_name == "yield-iwqis":
+        output_name = "nitrate-yield-lbAcreDay"
+    elif input_name == "load-iwqis":
+        output_name = "load-lbDay"
+    elif input_name == "ph-iwqis":
+        output_name = "pH"
+    elif input_name == "spec_cond-iwqis":
+        output_name = "specific-conductivity-uscm"
+
+
+
     else:
-        output_name = copy.copy(input_name)
+        output_name = input_name
+
+
+    print "&&&&&&&&&&&&&&&&& ", output_name
 
     return output_name
