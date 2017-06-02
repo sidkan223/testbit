@@ -326,13 +326,9 @@ def map_names(input_name, input_option=None):
     elif input_name == "diss_oxy_con-iwqis":
         output_name = "dissolved-oxygen-mgl"
     elif input_name == "turbi_mean-iwqis":
-        output_name = "turbidity-ntu"
+        output_name = "water-turbidity-ntu"
     elif input_name == "temp_water-iwqis":
-        output_name = "temperature-c"
-    elif input_name == "yield-iwqis":
-        output_name = "nitrate-yield-lbAcreDay"
-    elif input_name == "load-iwqis":
-        output_name = "load-lbDay"
+        output_name = "water-temperature-c"
     elif input_name == "ph-iwqis":
         output_name = "pH"
     elif input_name == "spec_cond-iwqis":
