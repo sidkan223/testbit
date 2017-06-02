@@ -4,8 +4,6 @@ import logging
 
 def map_names(input_name, input_option=None):
     # FIXME load mapping from yaml file
-    print "****", input_name,
-    print "****", input_option
     output_name = None
     if input_option != None:
         # IEPA
@@ -340,12 +338,7 @@ def map_names(input_name, input_option=None):
     elif input_name == "spec_cond-iwqis":
         output_name = "specific-conductivity-uscm"
 
-
-
     else:
         output_name = input_name
-
-
-    print "&&&&&&&&&&&&&&&&& ", output_name
 
     return output_name
