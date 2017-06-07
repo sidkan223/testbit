@@ -1,0 +1,1018 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyclowder package &#8212; pyclowder2 2.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="setup module" href="setup.html" />
+    <link rel="prev" title="pyclowder2" href="modules.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pyclowder-package">
+<h1>pyclowder package<a class="headerlink" href="#pyclowder-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pyclowder.collections">
+<span id="pyclowder-collections-module"></span><h2>pyclowder.collections module<a class="headerlink" href="#module-pyclowder.collections" title="Permalink to this headline">¶</a></h2>
+<p>Clowder API</p>
+<p>This module provides simple wrappers around the clowder Collections API</p>
+<dl class="function">
+<dt id="pyclowder.collections.create_empty">
+<code class="descclassname">pyclowder.collections.</code><code class="descname">create_empty</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>collectionname</em>, <em>description</em>, <em>parentid=None</em>, <em>spaceid=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.collections.create_empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new collection in Clowder.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+collectionname – name of new dataset to create
+description – description of new dataset
+parentid – id of parent collection
+spaceid – id of the space to add dataset to</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.collections.get_datasets">
+<code class="descclassname">pyclowder.collections.</code><code class="descname">get_datasets</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>collectionid</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.collections.get_datasets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get list of datasets in collection by UUID.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+datasetid – the collection to get datasets of</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.collections.upload_preview">
+<code class="descclassname">pyclowder.collections.</code><code class="descname">upload_preview</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>collectionid</em>, <em>previewfile</em>, <em>previewmetadata</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.collections.upload_preview" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upload preview to Clowder.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+collectionid – the file that is currently being processed
+preview – the file containing the preview
+previewdata: any metadata to be associated with preview,</p>
+<blockquote>
+<div>this can contain a section_id to indicate the
+section this preview should be associated with.</div></blockquote>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyclowder.connectors">
+<span id="pyclowder-connectors-module"></span><h2>pyclowder.connectors module<a class="headerlink" href="#module-pyclowder.connectors" title="Permalink to this headline">¶</a></h2>
+<p>Connectors</p>
+<p>The system has two connectors defined by default. The connectors are used to
+start the extractors. The connector will look for messages and call the
+check_message and process_message of the extractor. The two connectors are
+RabbitMQConnector and HPCConnector. Both of these will call the check_message
+first, and based on the result of this will ignore the message, download the
+file and call process_message or bypass the download and just call the
+process_message.</p>
+<p>RabbitMQConnector</p>
+<p>The RabbitMQ connector connects to a RabbitMQ instance, creates a queue and
+binds itself to that queue. Any message in the queue will be fetched and
+passed to the check_message and process_message. This connector takesthree
+parameters:</p>
+<ul class="simple">
+<li>rabbitmq_uri [REQUIRED] : the uri of the RabbitMQ server</li>
+<li>rabbitmq_exchange [OPTIONAL] : the exchange to which to bind the queue</li>
+<li>rabbitmq_key [OPTIONAL] : the key that binds the queue to the exchange</li>
+</ul>
+<p>HPCConnector</p>
+<p>The HPC connector will run extractions based on the pickle files that are
+passed in to the constructor as an argument. Once all pickle files are
+processed the extractor will stop. The pickle file is assumed to have one
+additional argument, the logfile that is being monitored to send feedback
+back to clowder. This connector takes a single argument (which can be list):</p>
+<ul class="simple">
+<li><dl class="first docutils">
+<dt>picklefile [REQUIRED] <span class="classifier-delimiter">:</span> <span class="classifier">a single file, or list of files that are the</span></dt>
+<dd>pickled messsages to be processed.</dd>
+</dl>
+</li>
+</ul>
+<dl class="class">
+<dt id="pyclowder.connectors.Connector">
+<em class="property">class </em><code class="descclassname">pyclowder.connectors.</code><code class="descname">Connector</code><span class="sig-paren">(</span><em>extractor_info</em>, <em>check_message=None</em>, <em>process_message=None</em>, <em>ssl_verify=True</em>, <em>mounted_paths=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.Connector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Class that will listen for messages.</p>
+<blockquote>
+<div>Once a message is received this will start the extraction process. It is assumed</div></blockquote>
+<p>that there is only one Connector per thread.</p>
+<dl class="method">
+<dt id="pyclowder.connectors.Connector.alive">
+<code class="descname">alive</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.Connector.alive" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return whether connection is still alive or not.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.Connector.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><em>url</em>, <em>raise_status=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.Connector.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>This methods wraps the Python requests DELETE method
+:param url: URl to use in DELETE request
+:param raise_status: (optional) If set to True, call raise_for_status. Default is True.
+:param kwargs: List of other optional arguments to pass to DELETE call
+:return: Response of the DELETE request</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.Connector.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>url</em>, <em>params=None</em>, <em>raise_status=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.Connector.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>This methods wraps the Python requests GET method
+:param url: URl to use in GET request
+:param params: (optional) GET request parameters
+:param raise_status: (optional) If set to True, call raise_for_status. Default is True.
+:param kwargs: List of other optional arguments to pass to GET call
+:return: Response of the GET request</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.Connector.listen">
+<code class="descname">listen</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.Connector.listen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Listen for incoming messages.</p>
+<p>This function will not return until all messages are processed, or the process is
+interrupted.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.Connector.message_error">
+<code class="descname">message_error</code><span class="sig-paren">(</span><em>resource</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.Connector.message_error" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.Connector.message_ok">
+<code class="descname">message_ok</code><span class="sig-paren">(</span><em>resource</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.Connector.message_ok" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.Connector.message_resubmit">
+<code class="descname">message_resubmit</code><span class="sig-paren">(</span><em>resource</em>, <em>retry_count</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.Connector.message_resubmit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.Connector.post">
+<code class="descname">post</code><span class="sig-paren">(</span><em>url</em>, <em>data=None</em>, <em>json_data=None</em>, <em>raise_status=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.Connector.post" title="Permalink to this definition">¶</a></dt>
+<dd><p>This methods wraps the Python requests POST method
+:param url: URl to use in POST request
+:param data: (optional) data (Dictionary, bytes, or file-like object) to send in the body of POST request
+:param json_data: (optional) json data to send with POST request
+:param raise_status: (optional) If set to True, call raise_for_status. Default is True.
+:param kwargs: List of other optional arguments to pass to POST call
+:return: Response of the POST request</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.Connector.put">
+<code class="descname">put</code><span class="sig-paren">(</span><em>url</em>, <em>data=None</em>, <em>raise_status=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.Connector.put" title="Permalink to this definition">¶</a></dt>
+<dd><p>This methods wraps the Python requests PUT method
+:param url: URl to use in PUT request
+:param data: (optional) data to send with PUT request
+:param raise_status: (optional) If set to True, call raise_for_status. Default is True.
+:param kwargs: List of other optional arguments to pass to PUT call
+:return: Response of the PUT request</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.Connector.register_extractor">
+<code class="descname">register_extractor</code><span class="sig-paren">(</span><em>endpoints</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.Connector.register_extractor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register extractor info with Clowder.</p>
+<p>This assumes a file called extractor_info.json to be located in either the
+current working directory, or the folder where the main program is started.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyclowder.connectors.Connector.registered_clowder">
+<code class="descname">registered_clowder</code><em class="property"> = []</em><a class="headerlink" href="#pyclowder.connectors.Connector.registered_clowder" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.Connector.status_update">
+<code class="descname">status_update</code><span class="sig-paren">(</span><em>status</em>, <em>resource</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.Connector.status_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends a status message.</p>
+<p>These messages, unlike logger messages, will often be send back to clowder to let
+the instance know the progress of the extractor.</p>
+<p>Keyword arguments:
+status - START | PROCESSING | DONE | ERROR
+resource  - descriptor object with {“type”, “id”} fields
+message - contents of the status update</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyclowder.connectors.HPCConnector">
+<em class="property">class </em><code class="descclassname">pyclowder.connectors.</code><code class="descname">HPCConnector</code><span class="sig-paren">(</span><em>extractor_info</em>, <em>picklefile</em>, <em>check_message=None</em>, <em>process_message=None</em>, <em>ssl_verify=True</em>, <em>mounted_paths=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.HPCConnector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyclowder.connectors.Connector" title="pyclowder.connectors.Connector"><code class="xref py py-class docutils literal"><span class="pre">pyclowder.connectors.Connector</span></code></a></p>
+<p>Takes pickle files and processes them.</p>
+<dl class="method">
+<dt id="pyclowder.connectors.HPCConnector.alive">
+<code class="descname">alive</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.HPCConnector.alive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.HPCConnector.listen">
+<code class="descname">listen</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.HPCConnector.listen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads the picklefile, sets up the logfile and call _process_message.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.HPCConnector.status_update">
+<code class="descname">status_update</code><span class="sig-paren">(</span><em>status</em>, <em>resource</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.HPCConnector.status_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store notification on log file with update</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyclowder.connectors.LocalConnector">
+<em class="property">class </em><code class="descclassname">pyclowder.connectors.</code><code class="descname">LocalConnector</code><span class="sig-paren">(</span><em>extractor_info</em>, <em>input_file_path</em>, <em>process_message=None</em>, <em>output_file_path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.LocalConnector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyclowder.connectors.Connector" title="pyclowder.connectors.Connector"><code class="xref py py-class docutils literal"><span class="pre">pyclowder.connectors.Connector</span></code></a></p>
+<p>Class that will handle processing of files locally. Needed for Big Data support.</p>
+<p>This will get the file to be processed from environment variables</p>
+<dl class="method">
+<dt id="pyclowder.connectors.LocalConnector.alive">
+<code class="descname">alive</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.LocalConnector.alive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.LocalConnector.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><em>url</em>, <em>raise_status=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.LocalConnector.delete" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.LocalConnector.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>url</em>, <em>params=None</em>, <em>raise_status=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.LocalConnector.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.LocalConnector.listen">
+<code class="descname">listen</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.LocalConnector.listen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.LocalConnector.post">
+<code class="descname">post</code><span class="sig-paren">(</span><em>url</em>, <em>data=None</em>, <em>json_data=None</em>, <em>raise_status=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.LocalConnector.post" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.LocalConnector.put">
+<code class="descname">put</code><span class="sig-paren">(</span><em>url</em>, <em>data=None</em>, <em>raise_status=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.LocalConnector.put" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.LocalConnector.stop">
+<code class="descname">stop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.LocalConnector.stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyclowder.connectors.RabbitMQConnector">
+<em class="property">class </em><code class="descclassname">pyclowder.connectors.</code><code class="descname">RabbitMQConnector</code><span class="sig-paren">(</span><em>extractor_info</em>, <em>rabbitmq_uri</em>, <em>rabbitmq_exchange=None</em>, <em>rabbitmq_key=None</em>, <em>check_message=None</em>, <em>process_message=None</em>, <em>ssl_verify=True</em>, <em>mounted_paths=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.RabbitMQConnector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyclowder.connectors.Connector" title="pyclowder.connectors.Connector"><code class="xref py py-class docutils literal"><span class="pre">pyclowder.connectors.Connector</span></code></a></p>
+<p>Listens for messages on RabbitMQ.</p>
+<p>This will connect to rabbitmq and register the extractor with a queue. If the exchange
+and key are specified it will bind the exchange to the queue. If an exchange is
+specified it will always try to bind the special key extractors.&lt;extractor_info[name]&gt; to the
+exchange and queue.</p>
+<dl class="method">
+<dt id="pyclowder.connectors.RabbitMQConnector.alive">
+<code class="descname">alive</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.RabbitMQConnector.alive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.RabbitMQConnector.connect">
+<code class="descname">connect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.RabbitMQConnector.connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>connect to rabbitmq using URL parameters</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.RabbitMQConnector.listen">
+<code class="descname">listen</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.RabbitMQConnector.listen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Listen for messages coming from RabbitMQ</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.RabbitMQConnector.on_message">
+<code class="descname">on_message</code><span class="sig-paren">(</span><em>channel</em>, <em>method</em>, <em>header</em>, <em>body</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.RabbitMQConnector.on_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>When the message is received this will call the generic _process_message in
+the connector class. Any message will only be acked if the message is processed,
+or there is an exception (except for SystemExit and SystemError exceptions).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.RabbitMQConnector.stop">
+<code class="descname">stop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.RabbitMQConnector.stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tell the connector to stop listening for messages.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyclowder.connectors.RabbitMQHandler">
+<em class="property">class </em><code class="descclassname">pyclowder.connectors.</code><code class="descname">RabbitMQHandler</code><span class="sig-paren">(</span><em>extractor_info</em>, <em>check_message=None</em>, <em>process_message=None</em>, <em>ssl_verify=True</em>, <em>mounted_paths=None</em>, <em>method=None</em>, <em>header=None</em>, <em>body=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.RabbitMQHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyclowder.connectors.Connector" title="pyclowder.connectors.Connector"><code class="xref py py-class docutils literal"><span class="pre">pyclowder.connectors.Connector</span></code></a></p>
+<p>Simple handler that will process a single message at a time.</p>
+<p>To avoid sharing non-threadsafe channels across threads, this will maintain
+a queue of messages that the super- loop can access and send later.</p>
+<dl class="method">
+<dt id="pyclowder.connectors.RabbitMQHandler.message_error">
+<code class="descname">message_error</code><span class="sig-paren">(</span><em>resource</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.RabbitMQHandler.message_error" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.RabbitMQHandler.message_ok">
+<code class="descname">message_ok</code><span class="sig-paren">(</span><em>resource</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.RabbitMQHandler.message_ok" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.RabbitMQHandler.message_resubmit">
+<code class="descname">message_resubmit</code><span class="sig-paren">(</span><em>resource</em>, <em>retry_count</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.RabbitMQHandler.message_resubmit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.RabbitMQHandler.process_messages">
+<code class="descname">process_messages</code><span class="sig-paren">(</span><em>channel</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.RabbitMQHandler.process_messages" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.RabbitMQHandler.start_thread">
+<code class="descname">start_thread</code><span class="sig-paren">(</span><em>json_body</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.RabbitMQHandler.start_thread" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start the separate thread for processing &amp; create a queue for messages.</p>
+<p>messages is a list of message objects:
+{</p>
+<blockquote>
+<div>“type”: status/ok/error/resubmit
+“resource”: resource
+“status”: status (status_update only)
+“message”: message content (status_update only)
+“retry_count”: retry_count (message_resubmit only)</div></blockquote>
+<p>}</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.connectors.RabbitMQHandler.status_update">
+<code class="descname">status_update</code><span class="sig-paren">(</span><em>status</em>, <em>resource</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.connectors.RabbitMQHandler.status_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyclowder.datasets">
+<span id="pyclowder-datasets-module"></span><h2>pyclowder.datasets module<a class="headerlink" href="#module-pyclowder.datasets" title="Permalink to this headline">¶</a></h2>
+<p>Clowder API</p>
+<p>This module provides simple wrappers around the clowder Datasets API</p>
+<dl class="function">
+<dt id="pyclowder.datasets.create_empty">
+<code class="descclassname">pyclowder.datasets.</code><code class="descname">create_empty</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>datasetname</em>, <em>description</em>, <em>parentid=None</em>, <em>spaceid=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.datasets.create_empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new dataset in Clowder.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+datasetname – name of new dataset to create
+description – description of new dataset
+parentid – id of parent collection
+spaceid – id of the space to add dataset to</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.datasets.download">
+<code class="descclassname">pyclowder.datasets.</code><code class="descname">download</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>datasetid</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.datasets.download" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download dataset to be processed from Clowder as zip file.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+datasetid – the file that is currently being processed</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.datasets.download_metadata">
+<code class="descclassname">pyclowder.datasets.</code><code class="descname">download_metadata</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>datasetid</em>, <em>extractor=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.datasets.download_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download dataset JSON-LD metadata from Clowder.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+datasetid – the dataset to fetch metadata of
+extractor – extractor name to filter results (if only one extractor’s metadata is desired)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.datasets.get_file_list">
+<code class="descclassname">pyclowder.datasets.</code><code class="descname">get_file_list</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>datasetid</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.datasets.get_file_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get list of files in a dataset as JSON object.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+datasetid – the dataset to get filelist of</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.datasets.get_info">
+<code class="descclassname">pyclowder.datasets.</code><code class="descname">get_info</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>datasetid</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.datasets.get_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get basic dataset information from UUID.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+datasetid – the dataset to get info of</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.datasets.remove_metadata">
+<code class="descclassname">pyclowder.datasets.</code><code class="descname">remove_metadata</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>datasetid</em>, <em>extractor=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.datasets.remove_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete dataset JSON-LD metadata from Clowder.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+datasetid – the dataset to fetch metadata of
+extractor – extractor name to filter deletion</p>
+<blockquote>
+<div>!!! ALL JSON-LD METADATA WILL BE REMOVED IF NO extractor PROVIDED !!!</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.datasets.submit_extraction">
+<code class="descclassname">pyclowder.datasets.</code><code class="descname">submit_extraction</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>datasetid</em>, <em>extractorname</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.datasets.submit_extraction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Submit dataset for extraction by given extractor.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+datasetid – the dataset UUID to submit
+extractorname – registered name of extractor to trigger</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.datasets.upload_metadata">
+<code class="descclassname">pyclowder.datasets.</code><code class="descname">upload_metadata</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>datasetid</em>, <em>metadata</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.datasets.upload_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upload dataset JSON-LD metadata to Clowder.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+datasetid – the dataset that is currently being processed
+metadata – the metadata to be uploaded</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyclowder.extractors">
+<span id="pyclowder-extractors-module"></span><h2>pyclowder.extractors module<a class="headerlink" href="#module-pyclowder.extractors" title="Permalink to this headline">¶</a></h2>
+<p>Clowder Extractors</p>
+<p>One of the most interesting aspects of Clowder is the ability to extract
+metadata from any file. This ability is created using extractors. To make it
+easier to create these extractors in python we have created a class called
+Extractor that can be used as the base class. The extractor should implement
+one or both of the check_message and process message functions. The
+check_message should return one of the values in CheckMessage.</p>
+<dl class="class">
+<dt id="pyclowder.extractors.Extractor">
+<em class="property">class </em><code class="descclassname">pyclowder.extractors.</code><code class="descname">Extractor</code><a class="headerlink" href="#pyclowder.extractors.Extractor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Basic extractor.</p>
+<p>Most extractors will want to override at least the process_message
+function. To control if the file should be downloaded (and if the
+process_message function should be called) the check_message
+function can be used.</p>
+<dl class="method">
+<dt id="pyclowder.extractors.Extractor.check_message">
+<code class="descname">check_message</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>secret_key</em>, <em>resource</em>, <em>parameters</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.extractors.Extractor.check_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks to see if the message needs to be processed.</p>
+<p>This will return one of the values from CheckMessage:
+- ignore : the process_message function is not called
+- download : the input file will be downloaded and process_message is called
+- bypass : the file is NOT downloaded but process_message is still called</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>connector (Connector): the connector that received the message
+parameters (dict): the message received</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.extractors.Extractor.get_metadata">
+<code class="descname">get_metadata</code><span class="sig-paren">(</span><em>content</em>, <em>resource_type</em>, <em>resource_id</em>, <em>server=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.extractors.Extractor.get_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a metadata field.</p>
+<p>This will return a metadata dict that is valid JSON-LD. This will use the results as well as the information
+in extractor_info.json to create the metadata record.</p>
+<p>This does a simple check for validity, and prints to debug any issues it finds (i.e. a key in conent is not
+defined in the context).</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">content (dict): the data that is in the content
+resource_type (string); type of resource such as file, dataset, etc
+resource_id (string): id of the resource the metadata is associated with
+server (string): clowder url, used for extractor_id, if None it will use</p>
+<blockquote class="last">
+<div><a class="reference external" href="https://clowder.ncsa.illinois.edu/extractors">https://clowder.ncsa.illinois.edu/extractors</a></div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.extractors.Extractor.process_message">
+<code class="descname">process_message</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>secret_key</em>, <em>resource</em>, <em>parameters</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.extractors.Extractor.process_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process the message and send results back to clowder.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>connector (Connector): the connector that received the message
+parameters (dict): the message received</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.extractors.Extractor.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.extractors.Extractor.setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse command line arguments and so some setup</p>
+<p>This will parse any command line arguments, update some variables based on these command line arguments and
+initialize the logging system.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyclowder.extractors.Extractor.start">
+<code class="descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.extractors.Extractor.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the connector and start listening.</p>
+<p>Based on the num command line argument this will start multiple instances of a connector and run each of them
+in their own thread. Once the connector(s) are created this function will go into a endless loop until either
+all connectors have stopped or the user kills the program.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyclowder.files">
+<span id="pyclowder-files-module"></span><h2>pyclowder.files module<a class="headerlink" href="#module-pyclowder.files" title="Permalink to this headline">¶</a></h2>
+<p>Clowder API</p>
+<p>This module provides simple wrappers around the clowder Files API</p>
+<dl class="function">
+<dt id="pyclowder.files.download">
+<code class="descclassname">pyclowder.files.</code><code class="descname">download</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>fileid</em>, <em>intermediatefileid=None</em>, <em>ext=”</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.files.download" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download file to be processed from Clowder.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+fileid – the file that is currently being processed
+intermediatefileid – either same as fileid, or the intermediate file to be used
+ext – the file extension, the downloaded file will end with this extension</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.files.download_info">
+<code class="descclassname">pyclowder.files.</code><code class="descname">download_info</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>fileid</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.files.download_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download file summary metadata from Clowder.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+fileid – the file to fetch metadata of</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.files.download_metadata">
+<code class="descclassname">pyclowder.files.</code><code class="descname">download_metadata</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>fileid</em>, <em>extractor=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.files.download_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download file JSON-LD metadata from Clowder.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+fileid – the file to fetch metadata of
+extractor – extractor name to filter results (if only one extractor’s metadata is desired)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.files.submit_extraction">
+<code class="descclassname">pyclowder.files.</code><code class="descname">submit_extraction</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>fileid</em>, <em>extractorname</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.files.submit_extraction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Submit file for extraction by given extractor.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+fileid – the file UUID to submit
+extractorname – registered name of extractor to trigger</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.files.upload_metadata">
+<code class="descclassname">pyclowder.files.</code><code class="descname">upload_metadata</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>fileid</em>, <em>metadata</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.files.upload_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upload file JSON-LD metadata to Clowder.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+fileid – the file that is currently being processed
+metadata – the metadata to be uploaded</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.files.upload_preview">
+<code class="descclassname">pyclowder.files.</code><code class="descname">upload_preview</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>fileid</em>, <em>previewfile</em>, <em>previewmetadata</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.files.upload_preview" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upload preview to Clowder.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+fileid – the file that is currently being processed
+previewfile – the file containing the preview
+previewmetadata – any metadata to be associated with preview, can contain a section_id</p>
+<blockquote>
+<div>to indicate the section this preview should be associated with.</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.files.upload_tags">
+<code class="descclassname">pyclowder.files.</code><code class="descname">upload_tags</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>fileid</em>, <em>tags</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.files.upload_tags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upload file tag to Clowder.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+fileid – the file that is currently being processed
+tags – the tags to be uploaded</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.files.upload_thumbnail">
+<code class="descclassname">pyclowder.files.</code><code class="descname">upload_thumbnail</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>fileid</em>, <em>thumbnail</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.files.upload_thumbnail" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upload thumbnail to Clowder.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+fileid – the file that the thumbnail should be associated with
+thumbnail – the file containing the thumbnail</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.files.upload_to_dataset">
+<code class="descclassname">pyclowder.files.</code><code class="descname">upload_to_dataset</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>datasetid</em>, <em>filepath</em>, <em>check_duplicate=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.files.upload_to_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upload file to existing Clowder dataset.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+datasetid – the dataset that the file should be associated with
+filepath – path to file
+check_duplicate – check if filename already exists in dataset and skip upload if so</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyclowder.geostreams">
+<span id="pyclowder-geostreams-module"></span><h2>pyclowder.geostreams module<a class="headerlink" href="#module-pyclowder.geostreams" title="Permalink to this headline">¶</a></h2>
+<p>Clowder API</p>
+<p>This module provides simple wrappers around the clowder Geostreams API</p>
+<dl class="function">
+<dt id="pyclowder.geostreams.create_datapoint">
+<code class="descclassname">pyclowder.geostreams.</code><code class="descname">create_datapoint</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>streamid</em>, <em>geom</em>, <em>starttime</em>, <em>endtime</em>, <em>properties={}</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.geostreams.create_datapoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new datapoint in Geostreams.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+streamid – id of stream to attach datapoint to
+geom – GeoJSON object of sensor geometry
+starttime – start time, in format 2017-01-25T09:33:02-06:00
+endtime – end time, in format 2017-01-25T09:33:02-06:00
+properties – JSON object with any desired properties</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.geostreams.create_sensor">
+<code class="descclassname">pyclowder.geostreams.</code><code class="descname">create_sensor</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>sensorname</em>, <em>geom</em>, <em>type</em>, <em>region</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.geostreams.create_sensor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new sensor in Geostreams.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+sensorname – name of new sensor to create
+geom – GeoJSON object of sensor geometry
+type – JSON object with {“id”, “title”, and “sensorType”}
+region – region of sensor</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.geostreams.create_stream">
+<code class="descclassname">pyclowder.geostreams.</code><code class="descname">create_stream</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>streamname</em>, <em>sensorid</em>, <em>geom</em>, <em>properties={}</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.geostreams.create_stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new stream in Geostreams.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+streamname – name of new stream to create
+sensorid – id of sensor to attach stream to
+geom – GeoJSON object of sensor geometry
+properties – JSON object with any desired properties</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.geostreams.get_sensor_by_name">
+<code class="descclassname">pyclowder.geostreams.</code><code class="descname">get_sensor_by_name</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>sensorname</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.geostreams.get_sensor_by_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get sensor by name from Geostreams, or return None.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+sensorname – name of sensor to search for</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.geostreams.get_sensors_by_circle">
+<code class="descclassname">pyclowder.geostreams.</code><code class="descname">get_sensors_by_circle</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>lon</em>, <em>lat</em>, <em>radius=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.geostreams.get_sensors_by_circle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get sensor by coordinate from Geostreams, or return None.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+lon – longitude of point
+lat – latitude of point
+radius – distance in meters around point to search</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.geostreams.get_sensors_by_polygon">
+<code class="descclassname">pyclowder.geostreams.</code><code class="descname">get_sensors_by_polygon</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>coord_list</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.geostreams.get_sensors_by_polygon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get sensor by coordinate from Geostreams, or return None.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+coord_list – list of (lon/lat) coordinate pairs forming polygon vertices</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.geostreams.get_stream_by_name">
+<code class="descclassname">pyclowder.geostreams.</code><code class="descname">get_stream_by_name</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>streamname</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.geostreams.get_stream_by_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get stream by name from Geostreams, or return None.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+streamname – name of stream to search for</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.geostreams.get_streams_by_circle">
+<code class="descclassname">pyclowder.geostreams.</code><code class="descname">get_streams_by_circle</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>lon</em>, <em>lat</em>, <em>radius=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.geostreams.get_streams_by_circle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get stream by coordinate from Geostreams, or return None.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+lon – longitude of point
+lat – latitude of point
+radius – distance in meters around point to search</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.geostreams.get_streams_by_polygon">
+<code class="descclassname">pyclowder.geostreams.</code><code class="descname">get_streams_by_polygon</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>coord_list</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.geostreams.get_streams_by_polygon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get stream by coordinate from Geostreams, or return None.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+coord_list – list of (lon/lat) coordinate pairs forming polygon vertices</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyclowder.sections">
+<span id="pyclowder-sections-module"></span><h2>pyclowder.sections module<a class="headerlink" href="#module-pyclowder.sections" title="Permalink to this headline">¶</a></h2>
+<p>Clowder API</p>
+<p>This module provides simple wrappers around the clowder Datasets API</p>
+<dl class="function">
+<dt id="pyclowder.sections.upload">
+<code class="descclassname">pyclowder.sections.</code><code class="descname">upload</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>sectiondata</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.sections.upload" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upload section to Clowder.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+sectiondata – section data to send</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.sections.upload_tags">
+<code class="descclassname">pyclowder.sections.</code><code class="descname">upload_tags</code><span class="sig-paren">(</span><em>connector</em>, <em>host</em>, <em>key</em>, <em>sectionid</em>, <em>tags</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.sections.upload_tags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upload section tag to Clowder.</p>
+<p>Keyword arguments:
+connector – connector information, used to get missing parameters and send status updates
+host – the clowder host, including http and port, should end with a /
+key – the secret key to login to clowder
+sectionid – the section that is currently being processed
+tags – the tags to be uploaded</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyclowder.utils">
+<span id="pyclowder-utils-module"></span><h2>pyclowder.utils module<a class="headerlink" href="#module-pyclowder.utils" title="Permalink to this headline">¶</a></h2>
+<p>Clowder Utils</p>
+<p>This module contains utilities that make it easier to work with clowder.
+Amongst these utilities is a simple way to initialize the logging system
+from either a file or the command line.</p>
+<dl class="class">
+<dt id="pyclowder.utils.CheckMessage">
+<em class="property">class </em><code class="descclassname">pyclowder.utils.</code><code class="descname">CheckMessage</code><a class="headerlink" href="#pyclowder.utils.CheckMessage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">enum.Enum</span></code></p>
+<p>Value to be returned from check_message function.</p>
+<p>Based on the result the following actions will happen:
+- ignore : the process_message function is not called
+- download : the input file will be downloaded and process_message is called
+- bypass : the file is NOT downloaded but process_message is still called</p>
+<dl class="attribute">
+<dt id="pyclowder.utils.CheckMessage.bypass">
+<code class="descname">bypass</code><em class="property"> = 2</em><a class="headerlink" href="#pyclowder.utils.CheckMessage.bypass" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyclowder.utils.CheckMessage.download">
+<code class="descname">download</code><em class="property"> = 1</em><a class="headerlink" href="#pyclowder.utils.CheckMessage.download" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyclowder.utils.CheckMessage.ignore">
+<code class="descname">ignore</code><em class="property"> = 0</em><a class="headerlink" href="#pyclowder.utils.CheckMessage.ignore" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyclowder.utils.StatusMessage">
+<em class="property">class </em><code class="descclassname">pyclowder.utils.</code><code class="descname">StatusMessage</code><a class="headerlink" href="#pyclowder.utils.StatusMessage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">enum.Enum</span></code></p>
+<p>Value of status to be sent to status_update function.</p>
+<p>Extractors can still define custom content in the message field
+of that function, but the status itself must be one of these. The
+full string will be STATUS: MESSAGE.</p>
+<dl class="attribute">
+<dt id="pyclowder.utils.StatusMessage.done">
+<code class="descname">done</code><em class="property"> = ‘DONE’</em><a class="headerlink" href="#pyclowder.utils.StatusMessage.done" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyclowder.utils.StatusMessage.error">
+<code class="descname">error</code><em class="property"> = ‘ERROR’</em><a class="headerlink" href="#pyclowder.utils.StatusMessage.error" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyclowder.utils.StatusMessage.processing">
+<code class="descname">processing</code><em class="property"> = ‘PROCESSING’</em><a class="headerlink" href="#pyclowder.utils.StatusMessage.processing" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyclowder.utils.StatusMessage.start">
+<code class="descname">start</code><em class="property"> = ‘START’</em><a class="headerlink" href="#pyclowder.utils.StatusMessage.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.utils.extract_zip_contents">
+<code class="descclassname">pyclowder.utils.</code><code class="descname">extract_zip_contents</code><span class="sig-paren">(</span><em>zipfilepath</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.utils.extract_zip_contents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract contents of a zipfile and return contents as list of file paths</p>
+<p>Keyword arguments:
+zipfilepath – path of zipfile to extract</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.utils.iso8601time">
+<code class="descclassname">pyclowder.utils.</code><code class="descname">iso8601time</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.utils.iso8601time" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pyclowder.utils.setup_logging">
+<code class="descclassname">pyclowder.utils.</code><code class="descname">setup_logging</code><span class="sig-paren">(</span><em>config_info=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyclowder.utils.setup_logging" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given config_info setup logging.</p>
+<p>If config_info points to a file it will try to load it, and configure
+the logging with the values from the file. This supports yaml, json
+and ini files.</p>
+<p>If config_info is a string, it will try to parse the string as json
+and configure the logging system using the parsed data.</p>
+<p>Finally if config_info is None it will use a basic configuration for
+the logging.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt>config_info (string): either a file on disk or a json string that</dt>
+<dd>has the logging configuration as json.</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyclowder">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pyclowder" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pyclowder package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-pyclowder.collections">pyclowder.collections module</a></li>
+<li><a class="reference internal" href="#module-pyclowder.connectors">pyclowder.connectors module</a></li>
+<li><a class="reference internal" href="#module-pyclowder.datasets">pyclowder.datasets module</a></li>
+<li><a class="reference internal" href="#module-pyclowder.extractors">pyclowder.extractors module</a></li>
+<li><a class="reference internal" href="#module-pyclowder.files">pyclowder.files module</a></li>
+<li><a class="reference internal" href="#module-pyclowder.geostreams">pyclowder.geostreams module</a></li>
+<li><a class="reference internal" href="#module-pyclowder.sections">pyclowder.sections module</a></li>
+<li><a class="reference internal" href="#module-pyclowder.utils">pyclowder.utils module</a></li>
+<li><a class="reference internal" href="#module-pyclowder">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">pyclowder2</a><ul>
+      <li>Previous: <a href="modules.html" title="previous chapter">pyclowder2</a></li>
+      <li>Next: <a href="setup.html" title="next chapter">setup module</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pyclowder.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, NCSA.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/pyclowder.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
