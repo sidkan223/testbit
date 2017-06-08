@@ -16,8 +16,8 @@ class ClowderClient(object):
 
     The `path` parameter used by many of the methods in this class call a specific path relative to the host + "api".
     For example passing in "/version" for host "https://seagrant-dev.ncsa.illinois.edu/clowder/" will call
-    "https://seagrant-dev.ncsa.illinois.edu/clowder/api/version". Make sure to include the slash at the beginning of the
-    fragment.
+    "https://seagrant-dev.ncsa.illinois.edu/clowder/api/version". Make sure to include the slash at the beginning of
+    the fragment.
     """
     logger = logging.getLogger(__name__)
     api_fragment = "/api"
@@ -192,11 +192,10 @@ class ClowderClient(object):
             except Exception as e:
                 logging.error("Error calling POST url %s: %s" % url, e.message)
 
-
     def delete(self, path):
         """
         Call HTTP DELETE against `path`.
-        
+
         TODO don't pass application/json as header
 
         :param path: Endpoint path relative to Clowder api.
