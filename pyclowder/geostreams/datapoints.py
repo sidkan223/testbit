@@ -53,7 +53,7 @@ class DatapointsApi(object):
         """
         latest_datapoint = None
         # logging.info("Getting datapoints for stream %s since %s " % stream_id, since)
-        if since== None:
+        if since is None:
             url = "/geostreams/datapoints?stream_id=%s" % stream_id
         else:
             url = "/geostreams/datapoints?stream_id=%s&since=%s" % stream_id, since
@@ -71,8 +71,8 @@ class DatapointsApi(object):
 
         return latest_datapoint
 
-    def datapoint_create_json(self,start_time,end_time,longitude,latitude,sensor_id,stream_id,sensor_name,property_ids,
-                              properties,owner=None,source=None,procedures=None,elevation=0):
+    def datapoint_create_json(self, start_time, end_time, longitude, latitude, sensor_id, stream_id, sensor_name,
+                              property_ids, properties, owner=None, source=None, procedures=None, elevation=0):
         datapoint = {
             'start_time': start_time,
             'end_time': end_time,

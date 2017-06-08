@@ -51,8 +51,8 @@ class CacheApi(object):
             logging.error("Error getting sensor %s" % sensor_id, e.message)
 
         # Calculate time in days between start and end date of sensor info
-        delta_days = (datetime.strptime(sensor['max_end_time'], "%Y-%m-%dT%H:%M:%SZ")
-                      - datetime.strptime(sensor['min_start_time'], "%Y-%m-%dT%H:%M:%SZ")).days
+        delta_days = (datetime.strptime(sensor['max_end_time'], "%Y-%m-%dT%H:%M:%SZ") -
+                      datetime.strptime(sensor['min_start_time'], "%Y-%m-%dT%H:%M:%SZ")).days
 
         # Calculate time in years between start and end date of sensor info
         delta_years = relativedelta(parser.parse(sensor['max_end_time']), parser.parse(sensor['min_start_time'])).years

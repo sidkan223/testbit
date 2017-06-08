@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+
 """Client library to interact with Geostreaming API in Clowder.
 
- This module provides methods to simplify writing client code against the Geostreaming Clowder API.
+ This module provides methods to simplify writing client code
+ against the Geostreaming Clowder API.
 
 """
 

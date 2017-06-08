@@ -79,7 +79,7 @@ class StreamsApi(object):
         except Exception as e:
             logging.error("Error retrieving stream %s: %s" % stream_id, e.message)
 
-    def stream_create_json_from_sensor(self,sensor):
+    def stream_create_json_from_sensor(self, sensor):
         stream = {
             "sensor_id": str(sensor["id"]),
             "name": sensor["name"],

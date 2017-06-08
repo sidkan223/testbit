@@ -60,7 +60,7 @@ def get_needed_values(needed_names, column_headers_in, parameters_map, data_in):
         data_dict['time_zone'] = data_hold[0][column_headers_out.index("time_zone")]
 
         parameter_name = parameters_map.lookup(data_hold[0][column_headers_out.index("Characteristic Name")],
-                                   data_hold[0][column_headers_out.index("Sample Fraction")])
+                                               data_hold[0][column_headers_out.index("Sample Fraction")])
 
         try:
             pass

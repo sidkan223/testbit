@@ -95,4 +95,3 @@ class DatasetsApi(object):
             return self.client.post("/datasets/%s/metadata" % dataset_id, metadata)
         except Exception:
             logging.error("Error upload to dataset %s: %s" % (dataset_id, e.message))
-

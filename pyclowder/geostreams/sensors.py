@@ -1,7 +1,7 @@
 # coding: utf-8
 
 """
-    Clowder Sensors API
+    Clowder Sensors API.
 """
 
 from pyclowder.client import ClowderClient
@@ -114,7 +114,7 @@ class SensorsApi(object):
         if huc:
             sensor["properties"]["huc"] = huc
         if network or id or title:
-            sensor['properties']['type'] ={}
+            sensor['properties']['type'] = {}
             if network:
                 sensor['properties']['type']['network'] = network
             if id:
