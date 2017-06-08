@@ -32,7 +32,6 @@ class StreamsApi(object):
         except Exception as e:
             logging.error("Error retrieving stream list: %s", e.message)
 
-
     def stream_get_by_name(self, stream_name):
         """
         Get a specific stream by id.
@@ -46,7 +45,6 @@ class StreamsApi(object):
             return None
         else:
             return stream
-
 
     def stream_post(self, stream):
         """
@@ -68,7 +66,6 @@ class StreamsApi(object):
             logging.info("Found stream " + stream['name'])
             return stream_from_clowder[0]
 
-
     def stream_delete(self, stream_id):
         """
         Delete a specific stream by id.
@@ -82,7 +79,6 @@ class StreamsApi(object):
         except Exception as e:
             logging.error("Error retrieving stream %s: %s" % stream_id, e.message)
 
-
     def stream_create_json_from_sensor(self,sensor):
         stream = {
             "sensor_id": str(sensor["id"]),
@@ -93,5 +89,3 @@ class StreamsApi(object):
         }
 
         return stream
-
-

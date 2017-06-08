@@ -6,7 +6,6 @@
 
 from pyclowder.client import ClowderClient
 import logging
-from request_json import get_json
 
 
 class SensorsApi(object):
@@ -79,7 +78,6 @@ class SensorsApi(object):
         except Exception as e:
             logging.error("Error adding sensor %s" % sensor, e.message)
 
-
     def sensor_delete(self, sensor_id):
         """
         Delete a specific sensor by id.
@@ -93,7 +91,8 @@ class SensorsApi(object):
         except Exception as e:
             logging.error("Error retrieving sensor %s: %s" % sensor_id, e.message)
 
-    def sensor_create_json(self, name, longitude, latitude, elevation, popupContent, region, huc=None, network=None, id=None, title=None):
+    def sensor_create_json(self, name, longitude, latitude, elevation, popupContent, region, huc=None, network=None,
+                           id=None, title=None):
         """Create sensor definition in JSON"""
         sensor = {
             "name": name,
@@ -138,7 +137,7 @@ class SensorsApi(object):
         except Exception as e:
             logging.error("Error updating sensor statistics for sensor %s: %s" % sensor_id, e.message)
 
-    def sensor_get_huc(self,latitude,longitude):
+    def sensor_get_huc(self, latitude, longitude):
         huc_url = "http://gltg.ncsa.illinois.edu/api/huc?lat=" + str(latitude) + "&lng=" + str(longitude)
-        huc_data = get_json(huc_url)
+        huc_data = self.client.get_json(huc_url)
         return huc_data

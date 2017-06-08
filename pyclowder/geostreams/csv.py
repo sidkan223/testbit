@@ -6,8 +6,10 @@
 import logging
 from time_transformers import time2utc
 
+
 def load(file):
     pass
+
 
 class ParametersMap(object):
 
@@ -17,8 +19,10 @@ class ParametersMap(object):
     def lookup(self, csv_name):
         return "new_parameter_id"
 
+
 def parameters_map(yaml_file):
     pass
+
 
 def get_needed_values(needed_names, column_headers_in, parameters_map, data_in):
     """Drop all columns from data_in that are not in needed_names

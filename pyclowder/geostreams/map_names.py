@@ -3,9 +3,9 @@ import logging
 
 
 def map_names(input_name, input_option=None):
-    # FIXME load mapping from yaml file
+    # FIXME load mapping from yaml file using csv.py
     output_name = None
-    if input_option != None:
+    if input_option is not None:
         # IEPA
 
         if input_name == "Kjeldahl nitrogen":
@@ -148,7 +148,6 @@ def map_names(input_name, input_option=None):
         output_name = "YSI_WiperPos_V"
     elif input_name[1:len(input_name) - 1] == "SUNA_Nitrate_mgL":
         output_name = "SUNA_Nitrate_mgL"
-
 
     # USGS
     elif input_name[-5:] == "00010":
@@ -318,7 +317,7 @@ def map_names(input_name, input_option=None):
     elif input_name == "sea_water_temperature":
         output_name = "water-temperature-c"
 
-    #IWQIS
+    # IWQIS
     elif input_name == "nitrate_con-iwqis":
         output_name = "nitrate-nitrite-as-n-mgl"
     elif input_name == "discharge-iwqis":
