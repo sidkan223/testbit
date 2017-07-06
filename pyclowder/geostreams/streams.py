@@ -63,7 +63,7 @@ class StreamsApi(object):
             return stream_from_clowder.json()
 
         else:
-            logging.info("Found stream " + stream['name'])
+            logging.info("Found stream %s", stream['name'])
             return stream_from_clowder[0]
 
     def stream_delete(self, stream_id):
@@ -77,7 +77,7 @@ class StreamsApi(object):
         try:
             return self.client.delete("/geostreams/streams/%s" % stream_id)
         except Exception as e:
-            logging.error("Error retrieving stream %s: %s" % stream_id, e.message)
+            logging.error("Error retrieving stream %s: %s", stream_id, e.message)
 
     def stream_create_json_from_sensor(self, sensor):
         stream = {
