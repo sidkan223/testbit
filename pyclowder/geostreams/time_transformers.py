@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime,timedelta
 from pytz import timezone, utc
 
 
@@ -9,3 +9,8 @@ def time2utc(date_in, time_zone="America/Chicago"):
         "%Y-%m-%dT%H:%M:%SZ")
 
     return date_out
+
+def julian_day_to_month_day(year,julian_day):
+    date = datetime(int(year), 1, 1) + timedelta(int(julian_day))
+
+    return date
