@@ -6,7 +6,6 @@
 
 from pyclowder.client import ClowderClient
 import logging
-import requests
 
 
 class SensorsApi(object):
