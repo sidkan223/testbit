@@ -72,6 +72,25 @@ class DatapointsApi(object):
         return latest_datapoint
 
     def datapoint_create_json(self, start_time, end_time, longitude, latitude, sensor_id, stream_id, sensor_name, properties, owner=None, source=None, procedures=None, elevation=0):
+
+        """
+        Create a single datapoint json object from input arguments - does not post datapoint to API
+        
+        :param start_time: 
+        :param end_time: 
+        :param longitude: 
+        :param latitude: 
+        :param sensor_id: 
+        :param stream_id: 
+        :param sensor_name: 
+        :param properties: 
+        :param owner: 
+        :param source: 
+        :param procedures: 
+        :param elevation: 
+        :return: 
+        """
+
         datapoint = {
             'start_time': start_time,
             'end_time': end_time,
@@ -86,20 +105,17 @@ class DatapointsApi(object):
             },
             'stream_id': str(stream_id),
             'sensor_id': str(sensor_id),
-            'sensor_name': str(sensor_name),
-            'properties': {
-                'site': sensor_name
-            }
+            'sensor_name': str(sensor_name)
         }
-        #
+
+        datapoint['properties'] = properties
+        datapoint['properties']['site'] = sensor_name
+
         if owner is not None:
             datapoint['properties']["owner"] = owner
         if source is not None:
             datapoint['properties']['source'] = source
         if procedures is not None:
             datapoint['properties']['procedures'] = procedures
-
-
-        datapoint['properties'] = properties
 
         return datapoint
