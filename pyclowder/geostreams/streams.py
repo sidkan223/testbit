@@ -32,7 +32,7 @@ class StreamsApi(object):
         except Exception as e:
             logging.error("Error retrieving stream list: %s", e.message)
 
-    def stream_get_by_name(self, stream_name):
+    def stream_get_by_name_json(self, stream_name):
         """
         Get a specific stream by id.
 
@@ -47,6 +47,20 @@ class StreamsApi(object):
             return stream
 
     def stream_post(self, stream):
+        """
+        Create stream.
+
+        :return: stream json.
+        :rtype: `requests.Response`
+        """
+        logging.debug("Adding stream")
+
+        try:
+            return self.client.post("/geostreams/streams", stream)
+        except Exception as e:
+            logging.error("Error retrieving stream %s: %s", stream_id, e.message)
+
+    def stream_post_json(self, stream):
         """
         Create stream.
 

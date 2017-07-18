@@ -4,3 +4,4 @@ build/
 docs/build/
 .cache
 *.iml
+.DS_Store

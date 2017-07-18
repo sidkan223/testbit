@@ -64,6 +64,19 @@ class SensorsApi(object):
         :return: sensor json.
         :rtype: `requests.Response`
         """
+        logging.debug("Adding sensor")
+        try:
+           return self.client.post("/geostreams/sensors", sensor)
+        except Exception as e:
+            logging.error("Error adding sensor %s: %s", sensor['name'], e.message)
+
+    def sensor_post_json(self, sensor):
+        """
+        Create sensor.
+
+        :return: sensor json.
+        :rtype: `requests.Response`
+        """
         logging.debug("Adding or getting sensor")
         try:
             sensor_from_clowder = self.sensor_get_by_name(sensor['name']).json()
