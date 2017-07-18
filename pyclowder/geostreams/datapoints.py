@@ -29,7 +29,7 @@ class DatapointsApi(object):
         try:
             return self.client.post("/geostreams/datapoints", datapoint)
         except Exception as e:
-            logging.error("Error adding datapoint %s: %s" % datapoint, e.message)
+            logging.error("Error adding datapoint %s: %s", datapoint, e.message)
 
     def datapoints_count_by_sensor_get(self, sensor_id):
         """
@@ -42,7 +42,7 @@ class DatapointsApi(object):
         try:
             return self.client.get("/geostreams/datapoints?sensor_id=%s&onlyCount=true" % sensor_id)
         except Exception as e:
-            logging.error("Error counting datapoints by sensor %s: %s" % sensor_id, e.message)
+            logging.error("Error counting datapoints by sensor %s: %s", sensor_id, e.message)
 
     def datapoint_latest_get(self, sensor_id, stream_id, since=None):
         """
@@ -56,11 +56,11 @@ class DatapointsApi(object):
         if since is None:
             url = "/geostreams/datapoints?stream_id=%s" % stream_id
         else:
-            url = "/geostreams/datapoints?stream_id=%s&since=%s" % stream_id, since
+            url = "/geostreams/datapoints?stream_id=%s&since=%s" % (stream_id, since)
         try:
             datapoints = self.client.get_json(url)
         except Exception as e:
-            logging.error("Error getting datapoints for stream %s since %s" % stream_id, since, e.message)
+            logging.error("Error getting datapoints for stream %s since %s: %s", stream_id, since, e.message)
 
         if isinstance(datapoints, list) and len(datapoints) > 0:
             latest_datapoint = datapoints[-1]
