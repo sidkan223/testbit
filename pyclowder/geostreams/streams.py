@@ -32,7 +32,7 @@ class StreamsApi(object):
         except Exception as e:
             logging.error("Error retrieving stream list: %s", e.message)
 
-    def stream_get_by_name(self, stream_name):
+    def stream_get_by_name_json(self, stream_name):
         """
         Get a specific stream by id.
 
@@ -53,6 +53,20 @@ class StreamsApi(object):
         :return: stream json.
         :rtype: `requests.Response`
         """
+        logging.debug("Adding stream")
+
+        try:
+            return self.client.post("/geostreams/streams", stream)
+        except Exception as e:
+            logging.error("Error retrieving stream %s: %s", stream_id, e.message)
+
+    def stream_post_json(self, stream):
+        """
+        Create stream.
+
+        :return: stream json.
+        :rtype: `requests.Response`
+        """
         logging.debug("Adding or getting stream")
 
         stream_from_clowder = self.stream_get_by_name(stream['name'])
@@ -63,7 +77,7 @@ class StreamsApi(object):
             return stream_from_clowder.json()
 
         else:
-            logging.info("Found stream " + stream['name'])
+            logging.info("Found stream %s", stream['name'])
             return stream_from_clowder[0]
 
     def stream_delete(self, stream_id):
@@ -77,7 +91,7 @@ class StreamsApi(object):
         try:
             return self.client.delete("/geostreams/streams/%s" % stream_id)
         except Exception as e:
-            logging.error("Error retrieving stream %s: %s" % stream_id, e.message)
+            logging.error("Error retrieving stream %s: %s", stream_id, e.message)
 
     def stream_create_json_from_sensor(self, sensor):
         stream = {

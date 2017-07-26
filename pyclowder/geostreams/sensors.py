@@ -41,7 +41,7 @@ class SensorsApi(object):
         try:
             return self.client.get("/geostreams/sensors/%s" % sensor_id)
         except Exception as e:
-            logging.error("Error retrieving sensor %s: %s" % sensor_id, e.message)
+            logging.error("Error retrieving sensor %s: %s", sensor_id, e.message)
 
     def sensor_get_by_name(self, sensor_name):
         """
@@ -54,10 +54,23 @@ class SensorsApi(object):
         try:
             return self.client.get("/geostreams/sensors?sensor_name=" + sensor_name)
         except Exception as e:
-            logging.error("Error retrieving sensor %s: %s" % sensor_name, e.message)
+            logging.error("Error retrieving sensor %s: %s", sensor_name, e.message)
             return None
 
     def sensor_post(self, sensor):
+        """
+        Create sensor.
+
+        :return: sensor json.
+        :rtype: `requests.Response`
+        """
+        logging.debug("Adding sensor")
+        try:
+           return self.client.post("/geostreams/sensors", sensor)
+        except Exception as e:
+            logging.error("Error adding sensor %s: %s", sensor['name'], e.message)
+
+    def sensor_post_json(self, sensor):
         """
         Create sensor.
 
@@ -76,7 +89,7 @@ class SensorsApi(object):
                 logging.info("Found sensor " + sensor['name'])
                 return sensor_from_clowder[0]
         except Exception as e:
-            logging.error("Error adding sensor %s" % sensor, e.message)
+            logging.error("Error adding sensor %s: %s", sensor['name'], e.message)
 
     def sensor_delete(self, sensor_id):
         """
@@ -89,7 +102,7 @@ class SensorsApi(object):
         try:
             return self.client.delete("/geostreams/sensors/%s" % sensor_id)
         except Exception as e:
-            logging.error("Error retrieving sensor %s: %s" % sensor_id, e.message)
+            logging.error("Error retrieving sensor %s: %s", sensor_id, e.message)
 
     def sensor_create_json(self, name, longitude, latitude, elevation, popupContent, region, huc=None, network=None,
                            id=None, title=None):
@@ -135,4 +148,4 @@ class SensorsApi(object):
             # TODO this should be a PUT on the API side, not a GET
             return self.client.get_auth("/geostreams/sensors/%s/update" % sensor_id)
         except Exception as e:
-            logging.error("Error updating sensor statistics for sensor %s: %s" % sensor_id, e.message)
+            logging.error("Error updating sensor statistics for sensor %s: %s", sensor_id, e.message)
