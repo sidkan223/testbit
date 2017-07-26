@@ -11,6 +11,7 @@ import tempfile
 import requests
 from urllib3.filepost import encode_multipart_formdata
 
+import pyclowder.datasets
 from pyclowder.utils import StatusMessage
 
 # Some sources of urllib3 support warning suppression, but not all
@@ -42,15 +43,17 @@ def download(connector, host, key, fileid, intermediatefileid=None, ext=""):
         intermediatefileid = fileid
 
     url = '%sapi/files/%s?key=%s' % (host, intermediatefileid, key)
-    result = requests.get(url, stream=True, verify=connector.ssl_verify)
-    result.raise_for_status()
+    result = connector.get(url, stream=True, verify=connector.ssl_verify if connector else True)
 
     (inputfile, inputfilename) = tempfile.mkstemp(suffix=ext)
-    with os.fdopen(inputfile, "w") as outputfile:
-        for chunk in result.iter_content(chunk_size=10*1024):
-            outputfile.write(chunk)
-
-    return inputfilename
+    try:
+        with os.fdopen(inputfile, "w") as outputfile:
+            for chunk in result.iter_content(chunk_size=10*1024):
+                outputfile.write(chunk)
+        return inputfilename
+    except:
+        os.remove(inputfilename)
+        raise
 
 
 def download_info(connector, host, key, fileid):
@@ -66,9 +69,7 @@ def download_info(connector, host, key, fileid):
     url = '%sapi/files/%s/metadata?key=%s' % (host, fileid, key)
 
     # fetch data
-    result = requests.get(url, stream=True,
-                          verify=connector.ssl_verify)
-    result.raise_for_status()
+    result = connector.get(url, stream=True, verify=connector.ssl_verify if connector else True)
 
     return result.json()
 
@@ -88,9 +89,28 @@ def download_metadata(connector, host, key, fileid, extractor=None):
     url = '%sapi/files/%s/metadata.jsonld?key=%s%s' % (host, fileid, key, filterstring)
 
     # fetch data
-    result = requests.get(url, stream=True,
-                          verify=connector.ssl_verify)
-    result.raise_for_status()
+    result = connector.get(url, stream=True, verify=connector.ssl_verify if connector else True)
+
+    return result.json()
+
+
+def submit_extraction(connector, host, key, fileid, extractorname):
+    """Submit file for extraction by given extractor.
+
+    Keyword arguments:
+    connector -- connector information, used to get missing parameters and send status updates
+    host -- the clowder host, including http and port, should end with a /
+    key -- the secret key to login to clowder
+    fileid -- the file UUID to submit
+    extractorname -- registered name of extractor to trigger
+    """
+
+    url = "%sapi/files/%s/extractions?key=%s" % (host, fileid, key)
+
+    result = connector.post(url,
+                            headers={'Content-Type': 'application/json'},
+                            data=json.dumps({"extractor": extractorname}),
+                            verify=connector.ssl_verify if connector else True)
 
     return result.json()
 
@@ -110,9 +130,8 @@ def upload_metadata(connector, host, key, fileid, metadata):
 
     headers = {'Content-Type': 'application/json'}
     url = '%sapi/files/%s/metadata.jsonld?key=%s' % (host, fileid, key)
-    result = requests.post(url, headers=headers, data=json.dumps(metadata),
-                           verify=connector.ssl_verify)
-    result.raise_for_status()
+    result = connector.post(url, headers=headers, data=json.dumps(metadata),
+                            verify=connector.ssl_verify if connector else True)
 
 
 # pylint: disable=too-many-arguments
@@ -137,25 +156,21 @@ def upload_preview(connector, host, key, fileid, previewfile, previewmetadata):
     # upload preview
     url = '%sapi/previews?key=%s' % (host, key)
     with open(previewfile, 'rb') as filebytes:
-        result = requests.post(url, files={"File": filebytes},
-                               verify=connector.ssl_verify)
-        result.raise_for_status()
+        result = connector.post(url, files={"File": filebytes}, verify=connector.ssl_verify if connector else True)
     previewid = result.json()['id']
     logger.debug("preview id = [%s]", previewid)
 
     # associate uploaded preview with orginal file
     if fileid and not (previewmetadata and previewmetadata['section_id']):
         url = '%sapi/files/%s/previews/%s?key=%s' % (host, fileid, previewid, key)
-        result = requests.post(url, headers=headers, data=json.dumps({}),
-                               verify=connector.ssl_verify)
-        result.raise_for_status()
+        result = connector.post(url, headers=headers, data=json.dumps({}),
+                                verify=connector.ssl_verify if connector else True)
 
     # associate metadata with preview
     if previewmetadata is not None:
         url = '%sapi/previews/%s/metadata?key=%s' % (host, previewid, key)
-        result = requests.post(url, headers=headers, data=json.dumps(previewmetadata),
-                               verify=connector.ssl_verify)
-        result.raise_for_status()
+        result = connector.post(url, headers=headers, data=json.dumps(previewmetadata),
+                                verify=connector.ssl_verify if connector else True)
 
     return previewid
 
@@ -175,9 +190,8 @@ def upload_tags(connector, host, key, fileid, tags):
 
     headers = {'Content-Type': 'application/json'}
     url = '%sapi/files/%s/tags?key=%s' % (host, fileid, key)
-    result = requests.post(url, headers=headers, data=json.dumps(tags),
-                           verify=connector.ssl_verify)
-    result.raise_for_status()
+    result = connector.post(url, headers=headers, data=json.dumps(tags),
+                            verify=connector.ssl_verify if connector else True)
 
 
 def upload_thumbnail(connector, host, key, fileid, thumbnail):
@@ -196,9 +210,7 @@ def upload_thumbnail(connector, host, key, fileid, thumbnail):
 
     # upload preview
     with open(thumbnail, 'rb') as inputfile:
-        result = requests.post(url, files={"File": inputfile},
-                               verify=connector.ssl_verify)
-        result.raise_for_status()
+        result = connector.post(url, files={"File": inputfile}, verify=connector.ssl_verify if connector else True)
     thumbnailid = result.json()['id']
     logger.debug("thumbnail id = [%s]", thumbnailid)
 
@@ -206,14 +218,13 @@ def upload_thumbnail(connector, host, key, fileid, thumbnail):
     if fileid:
         headers = {'Content-Type': 'application/json'}
         url = host + 'api/files/' + fileid + '/thumbnails/' + thumbnailid + '?key=' + key
-        result = requests.post(url, headers=headers, data=json.dumps({}),
-                               verify=connector.ssl_verify)
-        result.raise_for_status()
+        result = connector.post(url, headers=headers, data=json.dumps({}),
+                                verify=connector.ssl_verify if connector else True)
 
     return thumbnailid
 
 
-def upload_to_dataset(connector, host, key, datasetid, filepath):
+def upload_to_dataset(connector, host, key, datasetid, filepath, check_duplicate=False):
     """Upload file to existing Clowder dataset.
 
     Keyword arguments:
@@ -222,9 +233,17 @@ def upload_to_dataset(connector, host, key, datasetid, filepath):
     key -- the secret key to login to clowder
     datasetid -- the dataset that the file should be associated with
     filepath -- path to file
+    check_duplicate -- check if filename already exists in dataset and skip upload if so
     """
 
     logger = logging.getLogger(__name__)
+
+    if check_duplicate:
+        ds_files = pyclowder.datasets.get_file_list(connector, host, key, datasetid)
+        found_output_in_dataset = False
+        for f in ds_files:
+            if f['filename'] == os.path.basename(filepath):
+                logger.debug("found %s in dataset %s; not re-uploading" % (f['filename'], datasetid))
 
     for source_path in connector.mounted_paths:
         if filepath.startswith(connector.mounted_paths[source_path]):
@@ -233,9 +252,8 @@ def upload_to_dataset(connector, host, key, datasetid, filepath):
     url = '%sapi/uploadToDataset/%s?key=%s' % (host, datasetid, key)
 
     if os.path.exists(filepath):
-        result = requests.post(url, files={"File": open(filepath, 'rb')},
-                               verify=connector.ssl_verify)
-        result.raise_for_status()
+        result = connector.post(url, files={"File": open(filepath, 'rb')},
+                                verify=connector.ssl_verify if connector else True)
 
         uploadedfileid = result.json()['id']
         logger.debug("uploaded file id = [%s]", uploadedfileid)
@@ -270,9 +288,8 @@ def _upload_to_dataset_local(connector, host, key, datasetid, filepath):
         (content, header) = encode_multipart_formdata([
             ("file", '{"path":"%s"}' % filepath)
         ])
-        result = requests.post(url, data=content, headers={'Content-Type': header},
-                               verify=connector.ssl_verify)
-        result.raise_for_status()
+        result = connector.post(url, data=content, headers={'Content-Type': header},
+                                verify=connector.ssl_verify if connector else True)
 
         uploadedfileid = result.json()['id']
         logger.debug("uploaded file id = [%s]", uploadedfileid)
