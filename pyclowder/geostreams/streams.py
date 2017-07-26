@@ -69,7 +69,7 @@ class StreamsApi(object):
         """
         logging.debug("Adding or getting stream")
 
-        stream_from_clowder = self.stream_get_by_name(stream['name'])
+        stream_from_clowder = self.stream_get_by_name_json(stream['name'])
 
         if stream_from_clowder is None:
             logging.info("Creating stream with name: " + stream['name'])
