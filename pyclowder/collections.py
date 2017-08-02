@@ -72,6 +72,30 @@ def get_datasets(connector, host, key, collectionid):
     return json.loads(result.text)
 
 
+def get_id_or_create(connector, host, key, collectionname, parent_coll_id=None, space_id=None, descript=""):
+    """Fetch collection UUID from Clowder by name, creating it if not found.
+
+    Keyword arguments:
+    connector -- connector information, used to get missing parameters and send status updates
+    host -- the clowder host, including http and port, should end with a /
+    key -- the secret key to login to clowder
+    collectionname -- the collection name to find or create
+    parent_coll_id -- id of parent collection
+    space_id -- id of the space to add collection to
+    descript -- description of new collection
+    """
+
+    url = "%sapi/collections?key=%s&title=" % (host, key, collectionname)
+    result = requests.get(url, verify=connector.ssl_verify)
+    result.raise_for_status()
+
+    if len(result.json()) == 0:
+        return create_empty(connector, host, key, collectionname, descript,
+                                                  parent_coll_id, space_id)
+    else:
+        return result.json()[0]['id']
+
+
 # pylint: disable=too-many-arguments
 def upload_preview(connector, host, key, collectionid, previewfile, previewmetadata):
     """Upload preview to Clowder.

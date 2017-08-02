@@ -102,6 +102,29 @@ def download_metadata(connector, host, key, datasetid, extractor=None):
     return result.json()
 
 
+def get_id_or_create(connector, host, key, datasetname, collection_id=None, space_id=None, descript=""):
+    """Fetch dataset UUID from Clowder by name, creating it if not found.
+
+    Keyword arguments:
+    connector -- connector information, used to get missing parameters and send status updates
+    host -- the clowder host, including http and port, should end with a /
+    key -- the secret key to login to clowder
+    datasetname -- the dataset name to find or create
+    collection_id -- id of parent collection
+    space_id -- id of the space to add dataset to
+    descript -- description of new dataset
+    """
+
+    url = "%sapi/datasets?key=%s&title=" % (host, key, datasetname)
+    result = requests.get(url, verify=connector.ssl_verify)
+    result.raise_for_status()
+
+    if len(result.json()) == 0:
+        return create_empty(connector, host, key, datasetname, descript, collection_id, space_id)
+    else:
+        return result.json()[0]['id']
+
+
 def get_info(connector, host, key, datasetid):
     """Get basic dataset information from UUID.
 
