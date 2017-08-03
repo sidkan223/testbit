@@ -90,8 +90,7 @@ def get_id_or_create(connector, host, key, collectionname, parent_coll_id=None, 
     result.raise_for_status()
 
     if len(result.json()) == 0:
-        return create_empty(connector, host, key, collectionname, descript,
-                                                  parent_coll_id, space_id)
+        return create_empty(connector, host, key, collectionname, descript, parent_coll_id, space_id)
     else:
         return result.json()[0]['id']
 
