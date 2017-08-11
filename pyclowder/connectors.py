@@ -39,6 +39,7 @@ import subprocess
 import time
 import tempfile
 import threading
+import errno
 
 import pika
 import requests
@@ -79,43 +80,55 @@ class Connector(object):
         """Return whether connection is still alive or not."""
         return True
 
-    # pylint: disable=too-many-branches,too-many-statements
-    def _process_message(self, body):
-        """The actual processing of the message.
+    def _build_resource(self, body, host, secret_key):
+        """Examine message body and create resource object based on message type.
 
-        This will register the extractor with the clowder instance that the message came from.
-        Next it will call check_message to see if the message should be processed and if the
-        file should be downloaded. Finally it will call the actual process_message function.
+        Example FILE message -- *.file.#
+        {   "filename":         name of the triggering file without path,
+            "id":               UUID of the triggering file
+            "intermediateId":   UUID of the triggering file (deprecated)
+            "datasetId":        UUID of dataset that holds the file
+            "host":             URL of Clowder host; can include things like 'localhost' from browser address bar
+            "secretKey":        API secret key for Clowder host
+            "fileSize":         file size in bytes
+            "flags":            any additional flags
+        }
+
+        Example DATASET message -- *.dataset.file.#
+        {   "id":               UUID of the triggering file
+            "intermediateId":   UUID of the triggering file (deprecated)
+            "datasetId":        UUID of dataset that holds the file
+            "host":             URL of Clowder host; can include things like 'localhost' from browser address bar
+            "secretKey":        API secret key for Clowder host
+            "fileSize":         file size in bytes
+            "flags":            any additional flags
+        }
+
+        Example METADATA message -- *.metadata.#
+        {   "resourceType":     what type of object metadata was added to; 'file' or 'dataset'
+            "resourceId":       UUID of the triggering resource (file or dataset)
+            "metadata":         actual metadata that was added or removed
+            "id":               UUID of the triggering file (blank for 'dataset' type)
+            "intermediateId":   (deprecated)
+            "datasetId":        UUID of the triggering dataset (blank for 'file' type)
+            "host":             URL of Clowder host; can include things like 'localhost' from browser address bar
+            "secretKey":        API secret key for Clowder host
+            "fileSize":         file size in bytes
+            "flags":            any additional flags
+        }
         """
 
         logger = logging.getLogger(__name__)
 
-        message_type = body['routing_key']
-        retry_count = 0 if 'retry_count' not in body else body['retry_count']
-
-        # id of file that was added
-        fileid = body['id']
-        intermediatefileid = body['intermediateId']
-        # id of dataset file was added to
+        # See docstring for information about these fields
+        fileid = body.get('id', '')
+        intermediatefileid = body.get('intermediateId', '')
         datasetid = body.get('datasetId', '')
-        # reference to parent of resource (file parent is usually a dataset)
-        if datasetid != '':
-            parent_ref = {"type": "dataset", "id": datasetid}
-        else:
-            # TODO: enhance this for collection and dataset parents
-            parent_ref = {}
-        # name of file that was added - only on file messages, NOT dataset messages!
         filename = body.get('filename', '')
-        # get & clean clowder connection details
-        secret_key = body['secretKey']
-        host = body['host']
-        if not host.endswith('/'):
-            host += '/'
-        if host == "":
-            # TODO CATS-583 error with metadata only
-            return
 
-        # determine resource type
+        # determine resource type; defaults to file
+        resource_type = "file"
+        message_type = body['routing_key']
         if message_type.find(".dataset.") > -1:
             resource_type = "dataset"
         elif message_type.find(".file.") > -1:
@@ -128,52 +141,181 @@ class Connector(object):
                 resource_type = "dataset"
             else:
                 resource_type = "file"
-        else:
-            # This will be default value
-            resource_type = "file"
+        elif message_type.endswith(self.extractor_info['name']):
+            # This was migrated from another queue (e.g. error queue) so use extractor default
+            for key, value in self.extractor_info['process'].iteritems():
+                if key == "dataset":
+                    resource_type = "dataset"
+                else:
+                    resource_type = "file"
 
         # determine what to download (if needed) and add relevant data to resource
         if resource_type == "dataset":
-            resource_id = datasetid
-            ext = ''
-            datasetinfo = pyclowder.datasets.get_info(self, host, secret_key, datasetid)
-            filelist = pyclowder.datasets.get_file_list(self, host, secret_key, datasetid)
-            # populate filename field with the file that triggered this message
-            latest_file = None
-            for f in filelist:
-                if f['id'] == fileid:
-                    latest_file = f['filename']
-                    break
-            resource = {
-                "type": "dataset",
-                "id": resource_id,
-                "name": datasetinfo["name"],
-                "files": filelist,
-                "latest_file": latest_file,
-                "parent": parent_ref,
-                "dataset_info": datasetinfo
-            }
+            try:
+                datasetinfo = pyclowder.datasets.get_info(self, host, secret_key, datasetid)
+                filelist = pyclowder.datasets.get_file_list(self, host, secret_key, datasetid)
+                triggering_file = None
+                for f in filelist:
+                    if f['id'] == fileid:
+                        triggering_file = f['filename']
+                        break
+
+                return {
+                    "type": "dataset",
+                    "id": datasetid,
+                    "name": datasetinfo["name"],
+                    "files": filelist,
+                    "triggering_file": triggering_file,
+                    "parent": {},
+                    "dataset_info": datasetinfo
+                }
+            except:
+                msg = "[%s] : Error downloading dataset preprocess information." % datasetid
+                logger.exception(msg)
+                # Can't create full resource object but can provide essential details for status_update
+                resource = {
+                    "type": "dataset",
+                    "id": datasetid
+                }
+                self.status_update(pyclowder.utils.StatusMessage.error, resource, msg)
+                self.message_error(resource)
+                return None
 
         elif resource_type == "file":
-            resource_id = fileid
             ext = os.path.splitext(filename)[1]
-            resource = {
+            return {
                 "type": "file",
-                "id": resource_id,
+                "id": fileid,
                 "intermediate_id": intermediatefileid,
                 "name": filename,
                 "file_ext": ext,
-                "parent": parent_ref
+                "parent": {"type": "dataset",
+                           "id": datasetid}
             }
 
         elif resource_type == "metadata":
-            resource_id = body['resourceId']
-            resource = {
-                "type": body['resourceType'],
-                "id": resource_id,
-                "parent": parent_ref,
+            return {
+                "type": "metadata",
+                "parent": {"type": body['resourceType'],
+                           "id": body['resourceId']},
                 "metadata": body['metadata']
             }
+
+    def _check_for_local_file(self, host, secret_key, file_metadata):
+        """ Try to get pointer to locally accessible copy of file for extractor."""
+
+        # first check if file is accessible locally
+        if 'filepath' in file_metadata:
+            file_path = file_metadata['filepath']
+
+            # first simply check if file is present locally
+            if os.path.isfile(file_path):
+                return file_path
+
+            # otherwise check any mounted paths...
+            if len(self.mounted_paths) > 0:
+                for source_path in self.mounted_paths:
+                    if file_path.startswith(source_path):
+                        return file_path.replace(source_path, self.mounted_paths[source_path])
+
+        return None
+
+    def _download_file_metadata(self, host, secret_key, fileid, filepath):
+        """Download metadata for a file into a temporary _metadata.json file.
+
+        Returns:
+            (tmp directory created, tmp file created)
+        """
+        file_md = pyclowder.files.download_metadata(self, host, secret_key, fileid)
+        md_name = os.path.basename(filepath)+"_metadata.json"
+
+        md_dir = tempfile.mkdtemp(suffix=fileid)
+        (fd, md_file) = tempfile.mkstemp(suffix=md_name, dir=md_dir)
+
+        with os.fdopen(fd, "w") as tmp_file:
+            tmp_file.write(json.dumps(file_md))
+
+        return (md_dir, md_file)
+
+    def _prepare_dataset(self, host, secret_key, resource):
+        located_files = []
+        missing_files = []
+        tmp_files_created = []
+        tmp_dirs_created = []
+
+        # first check if any files in dataset accessible locally
+        ds_file_list = pyclowder.datasets.get_file_list(self, host, secret_key, resource["id"])
+        for ds_file in ds_file_list:
+            file_path = self._check_for_local_file(host, secret_key, ds_file)
+            if not file_path:
+                missing_files.append(ds_file)
+            else:
+                # Also get file metadata in format expected by extrator
+                (file_md_dir, file_md_tmp) = self._download_file_metadata(host, secret_key, ds_file['id'],
+                                                                          ds_file['filepath'])
+                located_files.append(file_path)
+                located_files.append(file_md_tmp)
+                tmp_files_created.append(file_md_tmp)
+                tmp_dirs_created.append(file_md_dir)
+
+        # If only some files found locally, check & download any that were missed
+        if len(located_files) > 0:
+            for ds_file in missing_files:
+                # Download file to temp directory
+                inputfile = pyclowder.files.download(self, host, secret_key, ds_file['id'], ds_file['id'],
+                                                     ds_file['file_ext'])
+                # Also get file metadata in format expected by extractor
+                (file_md_dir, file_md_tmp) = self._download_file_metadata(host, secret_key, ds_file['id'],
+                                                                          ds_file['filepath'])
+                located_files.append(inputfile)
+                located_files.append(file_md_tmp)
+                tmp_files_created.append(inputfile)
+                tmp_files_created.append(file_md_tmp)
+                tmp_dirs_created.append(file_md_dir)
+
+            # Also, get dataset metadata (normally included in dataset .zip download file)
+            ds_md = pyclowder.datasets.download_metadata(self, host, secret_key, resource["id"])
+            md_name = "%s_dataset_metadata.json" % resource["id"]
+            md_dir = tempfile.mkdtemp(suffix=resource["id"])
+            (fd, md_file) = tempfile.mkstemp(suffix=md_name, dir=md_dir)
+            with os.fdopen(fd, "w") as tmp_file:
+                tmp_file.write(json.dumps(ds_md))
+            located_files.append(md_file)
+            tmp_files_created.append(md_file)
+            tmp_dirs_created.append(md_dir)
+
+            file_paths = located_files
+
+        # If we didn't find any files locally, download dataset .zip as normal
+        else:
+            inputzip = pyclowder.datasets.download(self, host, secret_key, resource["id"])
+            file_paths = pyclowder.utils.extract_zip_contents(inputzip)
+            tmp_files_created += file_paths
+            tmp_files_created.append(inputzip)
+
+        return (file_paths, tmp_files_created, tmp_dirs_created)
+
+    # pylint: disable=too-many-branches,too-many-statements
+    def _process_message(self, body):
+        """The actual processing of the message.
+
+        This will register the extractor with the clowder instance that the message came from.
+        Next it will call check_message to see if the message should be processed and if the
+        file should be downloaded. Finally it will call the actual process_message function.
+        """
+
+        logger = logging.getLogger(__name__)
+
+        host = body.get('host', '')
+        if host == '':
+            return
+        elif not host.endswith('/'):
+            host += '/'
+        secret_key = body.get('secretKey', '')
+        retry_count = 0 if 'retry_count' not in body else body['retry_count']
+        resource = self._build_resource(body, host, secret_key)
+        if not resource:
+            return
 
         # register extractor
         url = "%sapi/extractors" % host
@@ -193,137 +335,50 @@ class Connector(object):
             if check_result != pyclowder.utils.CheckMessage.ignore:
                 if self.process_message:
 
-                    # PREPARE THE FILE FOR PROCESSING ---------------------------------------
+                    # FILE MESSAGES ---------------------------------------
                     if resource["type"] == "file":
-                        inputfile = None
-                        have_local_file = False
+                        file_path = None
+                        found_local = False
                         try:
                             if check_result != pyclowder.utils.CheckMessage.bypass:
-                                # first check if file is accessible locally
                                 file_metadata = pyclowder.files.download_info(self, host, secret_key, resource["id"])
-                                if 'filepath' in file_metadata:
-                                    file_path = file_metadata['filepath']
-                                    for source_path in self.mounted_paths:
-                                        if file_path.startswith(source_path):
-                                            inputfile = file_path.replace(source_path,
-                                                                          self.mounted_paths[source_path])
-                                            have_local_file = True
-                                            break
-
-                                # otherwise download file
-                                if not have_local_file:
-                                    inputfile = pyclowder.files.download(self, host, secret_key, fileid,
-                                                                         intermediatefileid, ext)
-                                resource['local_paths'] = [inputfile]
+                                file_path = self._check_for_local_file(host, secret_key, file_metadata)
+                                if not file_path:
+                                    file_path = pyclowder.files.download(self, host, secret_key, resource["id"],
+                                                                         resource["intermediate_id"],
+                                                                         resource["file_ext"])
+                                else:
+                                    found_local = True
+                                resource['local_paths'] = [file_path]
 
                             self.process_message(self, host, secret_key, resource, body)
                         finally:
-                            if inputfile is not None and not have_local_file:
+                            if file_path is not None and not found_local:
                                 try:
-                                    os.remove(inputfile)
+                                    os.remove(file_path)
                                 except OSError:
                                     logger.exception("Error removing download file")
 
-                    # PREPARE THE DATASET FOR PROCESSING ---------------------------------------
+                    # DATASET/METADATA MESSAGES ---------------------------------------
                     else:
-                        inputzip = None
-                        tmp_files_created = []
-                        tmp_dirs_created = []
-                        file_paths = []
+                        file_paths, tmp_files, tmp_dirs = [], [], []
                         try:
                             if check_result != pyclowder.utils.CheckMessage.bypass:
-                                # first check if any files in dataset accessible locally
-                                ds_file_list = pyclowder.datasets.get_file_list(self, host,
-                                                                                secret_key, resource["id"])
-                                located_files = []
-                                missing_files = []
-                                for dsf in ds_file_list:
-                                    have_local_file = False
-                                    if 'filepath' in dsf:
-                                        dsf_path = dsf['filepath']
-                                        for source_path in self.mounted_paths:
-                                            if dsf_path.startswith(source_path):
-                                                # Store pointer to local file if found
-                                                have_local_file = True
-                                                inputfile = dsf_path.replace(source_path,
-                                                                             self.mounted_paths[source_path])
-                                                if os.path.exists(inputfile):
-                                                    located_files.append(inputfile)
-
-                                                    # Also download metadata for the file (normally in ds .zip file)
-                                                    md = pyclowder.files.download_metadata(self, host, secret_key,
-                                                                                           dsf["id"])
-                                                    md_dir = tempfile.mkdtemp(suffix=dsf['id'])
-                                                    tmp_dirs_created.append(md_dir)
-                                                    md_name = os.path.basename(dsf_path)+"_metadata.json"
-                                                    (fd, md_file) = tempfile.mkstemp(suffix=md_name, dir=md_dir)
-                                                    with os.fdopen(fd, "w") as tmp_file:
-                                                        tmp_file.write(json.dumps(md))
-                                                    located_files.append(md_file)
-                                                    tmp_files_created.append(md_file)
-                                                    break
-                                    if not have_local_file:
-                                        missing_files.append(dsf)
-
-                                # if some files found locally, check & download any that weren't
-                                if len(located_files) > 0:
-                                    for dsf in missing_files:
-                                        dsf_path = dsf['filepath']
-
-                                        # Download file to temp directory
-                                        file_ext = dsf['filename'].split(".")[-1]
-                                        inputfile = pyclowder.files.download(self, host, secret_key, dsf['id'],
-                                                                             dsf['id'], ".%s" % file_ext)
-                                        located_files.append(inputfile)
-                                        tmp_files_created.append(inputfile)
-                                        logger.info("Downloaded file: %s" % inputfile)
-
-                                        # Also download metadata for the file (normally in ds .zip file)
-                                        md = pyclowder.files.download_metadata(self, host, secret_key,
-                                                                               dsf["id"])
-                                        md_dir = tempfile.mkdtemp(suffix=dsf['id'])
-                                        tmp_dirs_created.append(md_dir)
-                                        md_name = os.path.basename(dsf_path)+"_metadata.json"
-                                        (fd, md_file) = tempfile.mkstemp(suffix=md_name, dir=md_dir)
-                                        with os.fdopen(fd, "w") as tmp_file:
-                                            tmp_file.write(json.dumps(md))
-                                        located_files.append(md_file)
-                                        tmp_files_created.append(md_file)
-
-                                    # Lastly need to get dataset metadata (normally in ds .zip file)
-                                    md = pyclowder.datasets.download_metadata(self, host, secret_key,
-                                                                              datasetid)
-                                    md_dir = tempfile.mkdtemp(suffix=datasetid)
-                                    tmp_dirs_created.append(md_dir)
-                                    md_name = "%s_dataset_metadata.json" % datasetid
-                                    (fd, md_file) = tempfile.mkstemp(suffix=md_name, dir=md_dir)
-                                    with os.fdopen(fd, "w") as tmp_file:
-                                        tmp_file.write(json.dumps(md))
-                                    located_files.append(md_file)
-                                    tmp_files_created.append(md_file)
-
-                                    file_paths = located_files
-
-                                # If we didn't find any files locally, download dataset .zip
-                                else:
-                                    inputzip = pyclowder.datasets.download(self, host, secret_key,
-                                                                           datasetid)
-                                    file_paths = pyclowder.utils.extract_zip_contents(inputzip)
-                                    tmp_files_created += file_paths
-
+                                (file_paths, tmp_files, tmp_dirs) = self._prepare_dataset(host, secret_key, resource)
                             resource['local_paths'] = file_paths
+
                             self.process_message(self, host, secret_key, resource, body)
                         finally:
-                            if inputzip is not None:
-                                try:
-                                    os.remove(inputzip)
-                                except OSError:
-                                    logger.exception("Error removing download zip file")
-                            for tmp_f in tmp_files_created:
+                            for tmp_f in tmp_files:
                                 try:
                                     os.remove(tmp_f)
                                 except OSError:
                                     logger.exception("Error removing temporary dataset file")
+                            for tmp_d in tmp_dirs:
+                                try:
+                                    os.rmdir(tmp_d)
+                                except OSError:
+                                    logger.exception("Error removing temporary dataset directory")
 
             else:
                 self.status_update(pyclowder.utils.StatusMessage.processing, resource, "Skipped in check_message")
@@ -332,25 +387,25 @@ class Connector(object):
 
         except SystemExit as exc:
             status = "sys.exit : " + exc.message
-            logger.exception("[%s] %s", resource_id, status)
+            logger.exception("[%s] %s", resource['id'], status)
             self.status_update(pyclowder.utils.StatusMessage.error, resource, status)
             self.message_resubmit(resource, retry_count)
             raise
         except KeyboardInterrupt:
             status = "keyboard interrupt"
-            logger.exception("[%s] %s", fileid, status)
+            logger.exception("[%s] %s", resource['id'], status)
             self.status_update(pyclowder.utils.StatusMessage.error, resource, status)
             self.message_resubmit(resource, retry_count)
             raise
         except GeneratorExit:
             status = "generator exit"
-            logger.exception("[%s] %s", fileid, status)
+            logger.exception("[%s] %s", resource['id'], status)
             self.status_update(pyclowder.utils.StatusMessage.error, resource, status)
             self.message_resubmit(resource, retry_count)
             raise
         except StandardError as exc:
             status = "standard error : " + str(exc.message)
-            logger.exception("[%s] %s", resource_id, status)
+            logger.exception("[%s] %s", resource['id'], status)
             self.status_update(pyclowder.utils.StatusMessage.error, resource, status)
             if retry_count < 10:
                 self.message_resubmit(resource, retry_count+1)
@@ -358,12 +413,12 @@ class Connector(object):
                 self.message_error(resource)
         except subprocess.CalledProcessError as exc:
             status = str.format("Error processing [exit code={}]\n{}", exc.returncode, exc.output)
-            logger.exception("[%s] %s", resource_id, status)
+            logger.exception("[%s] %s", resource['id'], status)
             self.status_update(pyclowder.utils.StatusMessage.error, resource, status)
             self.message_error(resource)
         except Exception as exc:  # pylint: disable=broad-except
             status = "Error processing : " + exc.message
-            logger.exception("[%s] %s", resource_id, status)
+            logger.exception("[%s] %s", resource['id'], status)
             self.status_update(pyclowder.utils.StatusMessage.error, resource, status)
             self.message_error(resource)
 
@@ -388,7 +443,7 @@ class Connector(object):
                 Connector.registered_clowder.append(url)
                 try:
                     result = requests.post(url.strip(), headers=headers,
-                                           data=data,
+                                           data=json.dumps(data),
                                            verify=self.ssl_verify)
                     result.raise_for_status()
                     logger.debug("Registering extractor with %s : %s", url, result.text)
@@ -418,6 +473,70 @@ class Connector(object):
     def message_resubmit(self, resource, retry_count):
         self.status_update(pyclowder.utils.StatusMessage.processing, resource, "Resubmitting message (attempt #%s)"
                            % retry_count)
+
+    def get(self, url, params=None, raise_status=True, **kwargs):
+        """
+        This methods wraps the Python requests GET method
+        :param url: URl to use in GET request
+        :param params: (optional) GET request parameters
+        :param raise_status: (optional) If set to True, call raise_for_status. Default is True.
+        :param kwargs: List of other optional arguments to pass to GET call
+        :return: Response of the GET request
+        """
+
+        response = requests.get(url, params=params, **kwargs)
+        if raise_status:
+            response.raise_for_status()
+
+        return response
+
+    def post(self, url, data=None, json_data=None, raise_status=True, **kwargs):
+        """
+        This methods wraps the Python requests POST method
+        :param url: URl to use in POST request
+        :param data: (optional) data (Dictionary, bytes, or file-like object) to send in the body of POST request
+        :param json_data: (optional) json data to send with POST request
+        :param raise_status: (optional) If set to True, call raise_for_status. Default is True.
+        :param kwargs: List of other optional arguments to pass to POST call
+        :return: Response of the POST request
+        """
+
+        response = requests.post(url, data=data, json=json_data, **kwargs)
+        if raise_status:
+            response.raise_for_status()
+
+        return response
+
+    def put(self, url, data=None, raise_status=True, **kwargs):
+        """
+        This methods wraps the Python requests PUT method
+        :param url: URl to use in PUT request
+        :param data: (optional) data to send with PUT request
+        :param raise_status: (optional) If set to True, call raise_for_status. Default is True.
+        :param kwargs: List of other optional arguments to pass to PUT call
+        :return: Response of the PUT request
+        """
+
+        response = requests.put(url, data=data, **kwargs)
+        if raise_status:
+            response.raise_for_status()
+
+        return response
+
+    def delete(self, url, raise_status=True, **kwargs):
+        """
+        This methods wraps the Python requests DELETE method
+        :param url: URl to use in DELETE request
+        :param raise_status: (optional) If set to True, call raise_for_status. Default is True.
+        :param kwargs: List of other optional arguments to pass to DELETE call
+        :return: Response of the DELETE request
+        """
+
+        response = requests.delete(url, **kwargs)
+        if raise_status:
+            response.raise_for_status()
+
+        return response
 
 
 # pylint: disable=too-many-instance-attributes
@@ -513,11 +632,19 @@ class RabbitMQConnector(Connector):
         finally:
             logging.getLogger(__name__).info("Stopped listening for messages.")
             if self.channel:
-                self.channel.close()
-                self.channel = None
+                try:
+                    self.channel.close()
+                except Exception:
+                    logging.getLogger(__name__).exception("Error while closing channel.")
+                finally:
+                    self.channel = None
             if self.connection:
-                self.connection.close()
-                self.connection = None
+                try:
+                    self.connection.close()
+                except Exception:
+                    logging.getLogger(__name__).exception("Error while closing connection.")
+                finally:
+                    self.connection = None
 
     def stop(self):
         """Tell the connector to stop listening for messages."""
@@ -575,20 +702,21 @@ class RabbitMQHandler(Connector):
 
     def process_messages(self, channel):
         while self.messages:
-            msg = self.messages.pop()
+            msg = self.messages.pop(0)
 
             if msg["type"] == 'status':
-                properties = pika.BasicProperties(delivery_mode=2, correlation_id=self.header.correlation_id)
-                channel.basic_publish(exchange='',
-                                      routing_key=self.header.reply_to,
-                                      properties=properties,
-                                      body=json.dumps(msg['status']))
+                if self.header.reply_to:
+                    properties = pika.BasicProperties(delivery_mode=2, correlation_id=self.header.correlation_id)
+                    channel.basic_publish(exchange='',
+                                          routing_key=self.header.reply_to,
+                                          properties=properties,
+                                          body=json.dumps(msg['status']))
 
             elif msg["type"] == 'ok':
                 channel.basic_ack(self.method.delivery_tag)
 
             elif msg["type"] == 'error':
-                properties = pika.BasicProperties(delivery_mode=2)
+                properties = pika.BasicProperties(delivery_mode=2, reply_to=self.header.reply_to)
                 channel.basic_publish(exchange='',
                                       routing_key='error.' + self.extractor_info['name'],
                                       properties=properties,
@@ -688,3 +816,102 @@ class HPCConnector(Connector):
             except:
                 logger.exception("Error: unable to write extractor status to log file")
                 raise
+
+
+class LocalConnector(Connector):
+    """
+    Class that will handle processing of files locally. Needed for Big Data support.
+
+    This will get the file to be processed from environment variables
+
+    """
+
+    def __init__(self, extractor_info, input_file_path, process_message=None, output_file_path=None):
+        super(LocalConnector, self).__init__(extractor_info, process_message=process_message)
+        self.input_file_path = input_file_path
+        self.output_file_path = output_file_path
+        self.completed_processing = False
+
+    def listen(self):
+        local_parameters = dict()
+        local_parameters["inputfile"] = self.input_file_path
+        local_parameters["outputfile"] = self.output_file_path
+
+        # Set other parameters to emtpy string
+        local_parameters["fileid"] = None
+        local_parameters["id"] = None
+        local_parameters["host"] = None
+        local_parameters["intermediateId"] = None
+        local_parameters["fileSize"] = None
+        local_parameters["flags"] = None
+        local_parameters["filename"] = None
+        local_parameters["logfile"] = None
+        local_parameters["datasetId"] = None
+        local_parameters["secretKey"] = None
+        local_parameters["routing_key"] = None
+
+        ext = os.path.splitext(self.input_file_path)[1]
+        resource = {
+            "type": "file",
+            "id": "",
+            "intermediate_id": "",
+            "name": self.input_file_path,
+            "file_ext": ext,
+            "parent": dict(),
+            "local_paths": [self.input_file_path]
+        }
+
+        # TODO: BD-1638 Call _process_message by generating pseudo JSON responses from get method
+        self.process_message(self, "", "", resource, local_parameters)
+        self.completed_processing = True
+
+    def alive(self):
+        return not self.completed_processing
+
+    def stop(self):
+        pass
+
+    def get(self, url, params=None, raise_status=True, **kwargs):
+        logging.getLogger(__name__).debug("GET: " + url)
+        return None
+
+    def post(self, url, data=None, json_data=None, raise_status=True, **kwargs):
+
+        logging.getLogger(__name__).debug("POST: " + url)
+        # Handle metadata POST endpoints
+        if url.find("/technicalmetadatajson") != -1 or url.find("/metadata.jsonld") != -1:
+
+            json_metadata_formatted_string = json.dumps(json.loads(data), indent=4, sort_keys=True)
+            logging.getLogger(__name__).debug(json_metadata_formatted_string)
+            extension = ".json"
+
+            # If output file path is not set
+            if self.output_file_path is None or self.output_file_path == "":
+                # Create json filename from the input filename
+                json_filename = self.input_file_path + extension
+            else:
+                json_filename = str(self.output_file_path)
+                if not json_filename.endswith(extension):
+                    json_filename += extension
+
+            # Checking permissions using EAFP (Easier to Ask for Forgiveness than Permission) technique
+            try:
+                json_file = open(json_filename, "w")
+            except IOError as e:
+                if e.errno == errno.EACCES:
+                    logging.getLogger(__name__).exception(
+                        "You do not have enough permissions to create the output file " + json_filename)
+                else:
+                    raise
+            else:
+                with json_file:
+                    json_file.write(json_metadata_formatted_string)
+                    logging.getLogger(__name__).debug("Metadata output file path: " + json_filename)
+
+    def put(self, url, data=None, raise_status=True, **kwargs):
+        logging.getLogger(__name__).debug("PUT: " + url)
+        return None
+
+    def delete(self, url, raise_status=True, **kwargs):
+        logging.getLogger(__name__).debug("DELETE: " + url)
+        return None

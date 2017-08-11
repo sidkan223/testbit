@@ -2,18 +2,15 @@
 
 This module provides simple wrappers around the clowder Datasets API
 """
-
 import json
 import logging
 import os
 import tempfile
-
 import requests
-
 from pyclowder.utils import StatusMessage
 
 
-def create_empty(connector, host, key, datasetname, description):
+def create_empty(connector, host, key, datasetname, description, parentid=None, spaceid=None):
     """Create a new dataset in Clowder.
 
     Keyword arguments:
@@ -22,15 +19,33 @@ def create_empty(connector, host, key, datasetname, description):
     key -- the secret key to login to clowder
     datasetname -- name of new dataset to create
     description -- description of new dataset
+    parentid -- id of parent collection
+    spaceid -- id of the space to add dataset to
     """
 
     logger = logging.getLogger(__name__)
 
     url = '%sapi/datasets/createempty?key=%s' % (host, key)
 
-    result = requests.post(url, headers={"Content-Type": "application/json"},
-                           data='{"name":"%s", "description":"%s"}' % (datasetname, description),
-                           verify=connector.ssl_verify)
+    if parentid:
+        if spaceid:
+            result = requests.post(url, headers={"Content-Type": "application/json"},
+                                   data={"name": datasetname, "description": description, "collection": [parentid],
+                                   "space": [spaceid]}, verify=connector.ssl_verify if connector else True)
+        else:
+            result = requests.post(url, headers={"Content-Type": "application/json"},
+                                   data={"name": datasetname, "description": description, "collection": [parentid]},
+                                   verify=connector.ssl_verify if connector else True)
+    else:
+        if spaceid:
+            result = requests.post(url, headers={"Content-Type": "application/json"},
+                                   data={"name": datasetname, "description": description, "space": [spaceid]},
+                                   verify=connector.ssl_verify if connector else True)
+        else:
+            result = requests.post(url, headers={"Content-Type": "application/json"},
+                                   data={"name": datasetname, "description": description},
+                                   verify=connector.ssl_verify if connector else True)
+
     result.raise_for_status()
 
     datasetid = result.json()['id']
@@ -54,7 +69,7 @@ def download(connector, host, key, datasetid):
     # fetch dataset zipfile
     url = '%sapi/datasets/%s/download?key=%s' % (host, datasetid, key)
     result = requests.get(url, stream=True,
-                          verify=connector.ssl_verify)
+                          verify=connector.ssl_verify if connector else True)
     result.raise_for_status()
 
     (filedescriptor, zipfile) = tempfile.mkstemp(suffix=".zip")
@@ -81,7 +96,7 @@ def download_metadata(connector, host, key, datasetid, extractor=None):
 
     # fetch data
     result = requests.get(url, stream=True,
-                          verify=connector.ssl_verify)
+                          verify=connector.ssl_verify if connector else True)
     result.raise_for_status()
 
     return result.json()
@@ -100,7 +115,7 @@ def get_info(connector, host, key, datasetid):
     url = "%sapi/datasets/%s?key=%s" % (host, datasetid, key)
 
     result = requests.get(url,
-                          verify=connector.ssl_verify)
+                          verify=connector.ssl_verify if connector else True)
     result.raise_for_status()
 
     return json.loads(result.text)
@@ -118,7 +133,7 @@ def get_file_list(connector, host, key, datasetid):
 
     url = "%sapi/datasets/%s/listFiles?key=%s" % (host, datasetid, key)
 
-    result = requests.get(url, verify=connector.ssl_verify)
+    result = requests.get(url, verify=connector.ssl_verify if connector else True)
     result.raise_for_status()
 
     return json.loads(result.text)
@@ -141,8 +156,30 @@ def remove_metadata(connector, host, key, datasetid, extractor=None):
 
     # fetch data
     result = requests.delete(url, stream=True,
-                             verify=connector.ssl_verify)
+                             verify=connector.ssl_verify if connector else True)
     result.raise_for_status()
+
+
+def submit_extraction(connector, host, key, datasetid, extractorname):
+    """Submit dataset for extraction by given extractor.
+
+    Keyword arguments:
+    connector -- connector information, used to get missing parameters and send status updates
+    host -- the clowder host, including http and port, should end with a /
+    key -- the secret key to login to clowder
+    datasetid -- the dataset UUID to submit
+    extractorname -- registered name of extractor to trigger
+    """
+
+    url = "%sapi/datasets/%s/extractions?key=%s" % (host, datasetid, key)
+
+    result = requests.post(url,
+                           headers={'Content-Type': 'application/json'},
+                           data=json.dumps({"extractor": extractorname}),
+                           verify=connector.ssl_verify if connector else True)
+    result.raise_for_status()
+
+    return result.status_code
 
 
 def upload_metadata(connector, host, key, datasetid, metadata):
@@ -162,5 +199,5 @@ def upload_metadata(connector, host, key, datasetid, metadata):
     headers = {'Content-Type': 'application/json'}
     url = '%sapi/datasets/%s/metadata.jsonld?key=%s' % (host, datasetid, key)
     result = requests.post(url, headers=headers, data=json.dumps(metadata),
-                           verify=connector.ssl_verify)
+                           verify=connector.ssl_verify if connector else True)
     result.raise_for_status()
