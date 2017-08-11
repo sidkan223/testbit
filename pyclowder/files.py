@@ -18,6 +18,7 @@ from pyclowder.utils import StatusMessage
 try:
     from urllib3 import disable_warnings
     from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 except:
     pass
@@ -48,7 +49,7 @@ def download(connector, host, key, fileid, intermediatefileid=None, ext=""):
     (inputfile, inputfilename) = tempfile.mkstemp(suffix=ext)
     try:
         with os.fdopen(inputfile, "w") as outputfile:
-            for chunk in result.iter_content(chunk_size=10*1024):
+            for chunk in result.iter_content(chunk_size=10 * 1024):
                 outputfile.write(chunk)
         return inputfilename
     except:

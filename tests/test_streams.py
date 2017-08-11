@@ -1,9 +1,11 @@
 import logging
+
 from pyclowder.geostreams.sensors import SensorsApi
 from pyclowder.geostreams.streams import StreamsApi
 
 sensor_id = ""
 stream_id = ""
+
 
 def test_streams_post(caplog, host, key):
     global sensor_id, stream_id
@@ -17,7 +19,7 @@ def test_streams_post(caplog, host, key):
     body = stream_client.stream_post_json(stream_json)
     stream_id = body['id']
     logging.info("Streams %i posted", stream_id)
-    assert "id" in body 
+    assert "id" in body
 
 
 def test_streams_get(caplog, host, key):
@@ -36,7 +38,7 @@ def test_streams_delete(caplog, host, key):
     response = sensor_client.sensor_delete(sensor_id)
 
     stream_client = StreamsApi(host=host, key=key)
-    response = stream_client.stream_delete(stream_id)    
+    response = stream_client.stream_delete(stream_id)
 
     stream = response.json()
     logging.info("Sensor %s deleted", stream_id)

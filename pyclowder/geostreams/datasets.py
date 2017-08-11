@@ -4,12 +4,15 @@
     Clowder Dataset API for GeoStreams
 """
 
-from pyclowder.client import ClowderClient
 import logging
+
+from pyclowder.client import ClowderClient
 
 
 class DatasetsApi(object):
-
+    """
+        API to manage the REST CRUD endpoints for datasets.
+    """
     def __init__(self, client=None, host=None, key=None, username=None, password=None):
         """Set client if provided otherwise create new one"""
         if client:

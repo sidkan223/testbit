@@ -1,6 +1,8 @@
 import logging
-from pyclowder.client import ClowderClient
+
 from requests import HTTPError
+
+from pyclowder.client import ClowderClient
 from pyclowder.geostreams.sensors import SensorsApi
 
 

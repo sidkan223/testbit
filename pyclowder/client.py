@@ -4,10 +4,11 @@
     This module contains a basic client to interact with the Clowder API.
 """
 
-import requests
-import logging
 import json
+import logging
 import time
+
+import requests
 
 
 class ClowderClient(object):
@@ -82,7 +83,7 @@ class ClowderClient(object):
         try:
             return requests.get(url, headers=self.headers)
         except Exception as e:
-            logging.error("Error calling GET url %s: %s" % url, e.message)
+            logging.exception("Error calling GET url %s: %s" % url, e.message)
 
     def get_auth(self, path):
         """
@@ -99,7 +100,7 @@ class ClowderClient(object):
         try:
             return requests.get(url, params=params, headers=self.headers, auth=(self.username, self.password))
         except Exception as e:
-            logging.error("Error calling GET url %s: %s" % url, e.message)
+            logging.exception("Error calling GET url %s: %s" % url, e.message)
 
     def get_retry(self, path):
         """
@@ -119,14 +120,14 @@ class ClowderClient(object):
                     return None
                 r = requests.get(url, headers=self.headers)
                 count += 1
-                if r.status_code == 200:
+                if 200 <= r.status_code < 300:
                     return r.json()
                 else:
                     logging.warning("Error calling GET url %s" % url)
                     logging.warning("Waiting %i seconds and will try again" % self.call_timeout)
                     time.sleep(self.call_timeout)
             except Exception as e:
-                logging.error("Error calling GET url %s: %s" % url, e.message)
+                logging.exception("Error calling GET url %s: %s" % url, e.message)
 
     def post(self, path, content):
         """
@@ -142,7 +143,8 @@ class ClowderClient(object):
         params = {'key': self.key}
 
         try:
-            return requests.post(url, params=params, data=json.dumps(content), headers=self.headers, auth=(self.username, self.password))
+            return requests.post(url, params=params, data=json.dumps(content), headers=self.headers,
+                                 auth=(self.username, self.password))
         except Exception as e:
             self.logger.error("POST %s: %s", url, e.message)
 
@@ -160,7 +162,8 @@ class ClowderClient(object):
         url = self.host + self.api_fragment + path
         params = {'key': self.key}
         try:
-            return requests.post(url, params=params, files={"File": open(filename, 'rb')}, auth=(self.username, self.password))
+            return requests.post(url, params=params, files={"File": open(filename, 'rb')},
+                                 auth=(self.username, self.password))
         except Exception as e:
             self.logger.error("POST %s: %s", (url, e.message))
 
@@ -183,14 +186,14 @@ class ClowderClient(object):
                     return None
                 r = requests.post(url, data=json.dumps(content), headers=self.headers)
                 count += 1
-                if r.status_code == 200:
+                if 200 <= r.status_code < 300:
                     return r.json()
                 else:
                     logging.warning("Error calling POST url %s" % url)
                     logging.warning("Waiting %i seconds and will try again" % self.call_timeout)
                     time.sleep(self.call_timeout)
             except Exception as e:
-                logging.error("Error calling POST url %s: %s" % url, e.message)
+                logging.exception("Error calling POST url %s: %s" % url, e.message)
 
     def delete(self, path):
         """
@@ -228,11 +231,11 @@ class ClowderClient(object):
                     return None
                 r = requests.delete(url, headers=self.headers)
                 count += 1
-                if r.status_code == 200:
+                if 200 <= r.status_code < 300:
                     return r.json()
                 else:
                     logging.warning("Error calling DELETE url %s" % url)
                     logging.warning("Waiting %i seconds and will try again" % self.call_timeout)
                     time.sleep(self.call_timeout)
             except Exception as e:
-                logging.error("Error calling DELETE url %s: %s" % url, e.message)
+                logging.exception("Error calling DELETE url %s: %s" % url, e.message)

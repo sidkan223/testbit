@@ -11,6 +11,7 @@ def pytest_addoption(parser):
     parser.addoption("--key", action="store", default="r1ek3rs",
                      help="Clowder API Key, use this or username/password combo")
 
+
 @pytest.fixture(scope="module")
 def host(request):
     return request.config.getoption("--host")

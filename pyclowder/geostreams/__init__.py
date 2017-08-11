@@ -10,6 +10,7 @@
 # Set default logging handler to avoid "No handler found" warnings.
 # See http://docs.python-guide.org/en/latest/writing/logging/
 import logging
+
 try:  # Python 2.7+
     from logging import NullHandler
 except ImportError:

@@ -4,15 +4,19 @@
     Clowder Cache API
 """
 
-from pyclowder.client import ClowderClient
 import logging
 from datetime import datetime
+
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
 
+from pyclowder.client import ClowderClient
+
 
 class CacheApi(object):
-
+    """
+        This class provides functionality related to the Cache. Currently it is able to invalidate and prime the cache.
+    """
     def __init__(self, client=None, host=None, key=None, username=None, password=None):
         """Set client if provided otherwise create new one"""
         if client:

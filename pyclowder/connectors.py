@@ -31,15 +31,15 @@ back to clowder. This connector takes a single argument (which can be list):
                           pickled messsages to be processed.
 """
 
+import errno
 import json
 import logging
 import os
 import pickle
 import subprocess
-import time
 import tempfile
 import threading
-import errno
+import time
 
 import pika
 import requests
@@ -135,7 +135,7 @@ class Connector(object):
             resource_type = "file"
         elif message_type.find("metadata.added") > -1:
             resource_type = "metadata"
-        elif message_type == "extractors."+self.extractor_info['name']:
+        elif message_type == "extractors." + self.extractor_info['name']:
             # This was a manually submitted extraction
             if datasetid == fileid:
                 resource_type = "dataset"
@@ -227,7 +227,7 @@ class Connector(object):
             (tmp directory created, tmp file created)
         """
         file_md = pyclowder.files.download_metadata(self, host, secret_key, fileid)
-        md_name = os.path.basename(filepath)+"_metadata.json"
+        md_name = os.path.basename(filepath) + "_metadata.json"
 
         md_dir = tempfile.mkdtemp(suffix=fileid)
         (fd, md_file) = tempfile.mkstemp(suffix=md_name, dir=md_dir)
@@ -408,7 +408,7 @@ class Connector(object):
             logger.exception("[%s] %s", resource['id'], status)
             self.status_update(pyclowder.utils.StatusMessage.error, resource, status)
             if retry_count < 10:
-                self.message_resubmit(resource, retry_count+1)
+                self.message_resubmit(resource, retry_count + 1)
             else:
                 self.message_error(resource)
         except subprocess.CalledProcessError as exc:
@@ -576,7 +576,7 @@ class RabbitMQConnector(Connector):
 
         # declare the queue in case it does not exist
         self.channel.queue_declare(queue=self.extractor_info['name'], durable=True)
-        self.channel.queue_declare(queue='error.'+self.extractor_info['name'], durable=True)
+        self.channel.queue_declare(queue='error.' + self.extractor_info['name'], durable=True)
 
         # register with an exchange
         if self.rabbitmq_exchange:

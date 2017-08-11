@@ -4,14 +4,15 @@
     Clowder Streams API
 """
 
-from pyclowder.client import ClowderClient
 import logging
-import pprint
-import json
+
+from pyclowder.client import ClowderClient
 
 
 class StreamsApi(object):
-
+    """
+        API to manage the REST CRUD endpoints for Streams.
+    """
     def __init__(self, client=None, host=None, key=None, username=None, password=None):
         """Set client if provided otherwise create new one"""
         if client:

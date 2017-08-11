@@ -6,7 +6,9 @@ import json
 import logging
 import os
 import tempfile
+
 import requests
+
 from pyclowder.utils import StatusMessage
 
 
@@ -31,7 +33,7 @@ def create_empty(connector, host, key, datasetname, description, parentid=None, 
         if spaceid:
             result = requests.post(url, headers={"Content-Type": "application/json"},
                                    data={"name": datasetname, "description": description, "collection": [parentid],
-                                   "space": [spaceid]}, verify=connector.ssl_verify if connector else True)
+                                         "space": [spaceid]}, verify=connector.ssl_verify if connector else True)
         else:
             result = requests.post(url, headers={"Content-Type": "application/json"},
                                    data={"name": datasetname, "description": description, "collection": [parentid]},
@@ -74,7 +76,7 @@ def download(connector, host, key, datasetid):
 
     (filedescriptor, zipfile) = tempfile.mkstemp(suffix=".zip")
     with os.fdopen(filedescriptor, "w") as outfile:
-        for chunk in result.iter_content(chunk_size=10*1024):
+        for chunk in result.iter_content(chunk_size=10 * 1024):
             outfile.write(chunk)
 
     return zipfile

@@ -4,12 +4,15 @@
     Clowder Sensors API.
 """
 
-from pyclowder.client import ClowderClient
 import logging
+
+from pyclowder.client import ClowderClient
 
 
 class SensorsApi(object):
-
+    """
+        API to manage the REST CRUD endpoints for sensors.
+    """
     def __init__(self, client=None, host=None, key=None, username=None, password=None):
         """Set client if provided otherwise create new one"""
         if client:
@@ -66,7 +69,7 @@ class SensorsApi(object):
         """
         logging.debug("Adding sensor")
         try:
-           return self.client.post("/geostreams/sensors", sensor)
+            return self.client.post("/geostreams/sensors", sensor)
         except Exception as e:
             logging.error("Error adding sensor %s: %s", sensor['name'], e.message)
 

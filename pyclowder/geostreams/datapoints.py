@@ -4,13 +4,17 @@
     Clowder Datapoints API
 """
 
-from pyclowder.client import ClowderClient
 import logging
+
 from dateutil.parser import parse
+
+from pyclowder.client import ClowderClient
 
 
 class DatapointsApi(object):
-
+    """
+        API to manage the REST CRUD endpoints for datapoints.
+    """
     def __init__(self, client=None, host=None, key=None, username=None, password=None):
         """Set client if provided otherwise create new one"""
         if client:

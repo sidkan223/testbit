@@ -10,14 +10,13 @@ import json
 import logging
 import logging.config
 import os
+import tempfile
 import time
 import zipfile
-import tempfile
+
 import requests
-
-from enum import Enum
-
 import yaml
+from enum import Enum
 
 
 # this takes advantage of the fact that 0 == False and anything else == True

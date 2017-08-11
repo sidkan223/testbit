@@ -13,11 +13,11 @@ import json
 import logging
 import logging.config
 import os
+import re
 import sys
 import threading
-import traceback
-import re
 import time
+import traceback
 
 from pyclowder.connectors import RabbitMQConnector, HPCConnector, LocalConnector
 from pyclowder.utils import CheckMessage, setup_logging

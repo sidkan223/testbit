@@ -4,6 +4,7 @@
     Load data from CSV files.
 """
 import logging
+
 from time_transformers import time2utc
 
 
@@ -12,7 +13,6 @@ def load(file):
 
 
 class ParametersMap(object):
-
     def __init__(self, yaml_file):
         pass
 

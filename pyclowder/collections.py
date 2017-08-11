@@ -4,7 +4,9 @@ This module provides simple wrappers around the clowder Collections API
 """
 import json
 import logging
+
 import requests
+
 from pyclowder.utils import StatusMessage
 
 
@@ -28,7 +30,7 @@ def create_empty(connector, host, key, collectionname, description, parentid=Non
             url = '%sapi/collections/newCollectionWithParent?key=%s' % (host, key)
             result = requests.post(url, headers={"Content-Type": "application/json"},
                                    data={"name": collectionname, "description": description, "parentId": [parentid],
-                                   "space": spaceid}, verify=connector.ssl_verify if connector else True)
+                                         "space": spaceid}, verify=connector.ssl_verify if connector else True)
         else:
             url = '%sapi/collections/newCollectionWithParent?key=%s' % (host, key)
             result = requests.post(url, headers={"Content-Type": "application/json"},

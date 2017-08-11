@@ -5,12 +5,13 @@
 import logging
 import subprocess
 
-from pyclowder.extractors import Extractor
 import pyclowder.files
+from pyclowder.extractors import Extractor
 
 
 class WordCount(Extractor):
     """Count the number of characters, words and lines in a text file."""
+
     def __init__(self):
         Extractor.__init__(self)
 

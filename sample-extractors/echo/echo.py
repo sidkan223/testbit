@@ -4,9 +4,9 @@
 
 import logging
 
-from pyclowder.extractors import Extractor
-from pyclowder.connectors import CheckMessage
 import pyclowder.files
+from pyclowder.connectors import CheckMessage
+from pyclowder.extractors import Extractor
 
 
 class Echo(Extractor):
@@ -14,6 +14,7 @@ class Echo(Extractor):
 
     Uploads the data from the body back to clowder.
     """
+
     def __init__(self):
         Extractor.__init__(self)
 
