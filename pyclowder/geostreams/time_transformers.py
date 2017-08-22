@@ -5,10 +5,8 @@ from pytz import timezone, utc
 
 # convert to utc format from 2015-11-20 03:46:20
 def time2utc(date_in, time_zone="America/Chicago", daylight_savings=False):
-    if daylight_savings:
-        date_out = (timezone(time_zone).localize(datetime.strptime(date_in, "%Y-%m-%d %H:%M:%S")).astimezone(utc) - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
-    else:
-        date_out = timezone(time_zone).localize(datetime.strptime(date_in, "%Y-%m-%d %H:%M:%S")).astimezone(utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    date_out = timezone(time_zone).localize(datetime.strptime(date_in, "%Y-%m-%d %H:%M:%S")).astimezone(utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     return date_out
 
