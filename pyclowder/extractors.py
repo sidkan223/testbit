@@ -13,14 +13,20 @@ import json
 import logging
 import logging.config
 import os
+import io
 import sys
 import threading
 import traceback
 import re
 import time
+from builtins import range as xrange
 
-from pyclowder.connectors import RabbitMQConnector, HPCConnector, LocalConnector
-from pyclowder.utils import CheckMessage, setup_logging
+if sys.version_info.major == 3:
+    from .connectors import RabbitMQConnector, HPCConnector, LocalConnector
+    from .utils import CheckMessage, setup_logging
+else:
+    from pyclowder.connectors import RabbitMQConnector, HPCConnector, LocalConnector
+    from pyclowder.utils import CheckMessage, setup_logging
 
 
 class Extractor(object):
@@ -76,9 +82,14 @@ class Extractor(object):
                                  help='file or url or logging coonfiguration (default=None)')
         self.parser.add_argument('--num', '-n', type=int, nargs='?', default=1,
                                  help='number of parallel instances (default=1)')
-        self.parser.add_argument('--pickle', type=file, nargs='*', dest="hpc_picklefile",
-                                 default=None, action='append',
-                                 help='pickle file that needs to be processed (only needed for HPC)')
+        if (sys.version_info.major == 3):
+            self.parser.add_argument('--pickle', type=io.IOBase, nargs='*', dest="hpc_picklefile",
+                                    default=None, action='append',
+                                    help='pickle file that needs to be processed (only needed for HPC)')
+        else:
+            self.parser.add_argument('--pickle', type=file, nargs='*', dest="hpc_picklefile",
+                                    default=None, action='append',
+                                    help='pickle file that needs to be processed (only needed for HPC)')
         self.parser.add_argument('--register', '-r', nargs='?', dest="regstration_endpoints",
                                  default=registration_endpoints,
                                  help='Clowder registration URL (default=%s)' % registration_endpoints)
@@ -129,7 +140,7 @@ class Extractor(object):
                     logger.error("Missing URI for RabbitMQ")
                 else:
                     rabbitmq_key = []
-                    if not self.args.nobind:
+                    if not self.args.nobind  and sys.version_info.major == 2:
                         for key, value in self.extractor_info['process'].iteritems():
                             for mt in value:
                                 # Replace trailing '*' with '#'
@@ -142,6 +153,18 @@ class Extractor(object):
                                     else:
                                         rabbitmq_key.append("*.%s.%s" % (key, mt.replace("/", ".")))
 
+                    elif not self.args.nobind and sys.version_info.major == 3:
+                        for key, value in self.extractor_info['process'].items():
+                            for mt in value:
+                                # Replace trailing '*' with '#'
+                                mt = re.sub('(\*$)', '#', mt)
+                                if mt.find('*') > -1:
+                                    logger.error("Invalid '*' found in rabbitmq_key: %s" % mt)
+                                else:
+                                    if mt == "":
+                                        rabbitmq_key.append("*.%s.#" % key)
+                                    else:
+                                        rabbitmq_key.append("*.%s.%s" % (key, mt.replace("/", ".")))
                     rconn = RabbitMQConnector(self.extractor_info,
                                               check_message=self.check_message,
                                               process_message=self.process_message,

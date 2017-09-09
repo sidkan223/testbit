@@ -6,8 +6,11 @@ This module provides simple wrappers around the clowder Collections API
 import json
 import logging
 import requests
-
-from pyclowder.utils import StatusMessage
+import sys
+if sys.version_info.major == 3:
+    from .utils import StatusMessage
+else:
+    from pyclowder.utils import StatusMessage
 
 
 def create_empty(connector, host, key, collectionname, description, parentid=None, spaceid=None):

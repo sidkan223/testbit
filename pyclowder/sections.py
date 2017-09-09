@@ -8,7 +8,12 @@ import logging
 
 import requests
 
-from pyclowder.utils import StatusMessage
+import sys
+
+if sys.version_info.major == 3:
+    from .utils import StatusMessage
+else:
+    from pyclowder.utils import StatusMessage
 
 
 def upload(connector, host, key, sectiondata):

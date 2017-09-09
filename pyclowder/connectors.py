@@ -44,9 +44,16 @@ import errno
 import pika
 import requests
 
-import pyclowder.datasets
-import pyclowder.files
-import pyclowder.utils
+import sys
+
+if sys.version_info.major == 3:
+    from .datasets import *
+    from .files import *
+    from .utils import *
+else:
+    import pyclowder.datasets
+    import pyclowder.files
+    import pyclowder.utils
 
 
 class Connector(object):
@@ -403,8 +410,8 @@ class Connector(object):
             self.status_update(pyclowder.utils.StatusMessage.error, resource, status)
             self.message_resubmit(resource, retry_count)
             raise
-        except StandardError as exc:
-            status = "standard error : " + str(exc.message)
+        except Exception as exc:
+            status = "standard error : " + str(exc)
             logger.exception("[%s] %s", resource['id'], status)
             self.status_update(pyclowder.utils.StatusMessage.error, resource, status)
             if retry_count < 10:

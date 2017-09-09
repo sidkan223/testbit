@@ -9,8 +9,13 @@ import os
 import tempfile
 import requests
 
-from pyclowder.collections import get_datasets, get_child_collections
-from pyclowder.utils import StatusMessage
+import sys
+if sys.version_info.major == 3:
+    from .collections import get_datasets, get_child_collections
+    from .utils import StatusMessage
+else:
+    from pyclowder.collections import get_datasets, get_child_collections
+    from pyclowder.utils import StatusMessage
 
 
 def create_empty(connector, host, key, datasetname, description, parentid=None, spaceid=None):

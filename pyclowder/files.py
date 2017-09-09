@@ -8,12 +8,18 @@ import logging
 import os
 import tempfile
 
+import sys
 import requests
 from urllib3.filepost import encode_multipart_formdata
 
-from pyclowder.datasets import get_file_list
-from pyclowder.collections import get_datasets, get_child_collections
-from pyclowder.utils import StatusMessage
+if sys.version_info.major == 3:
+    from .datasets import get_file_list
+    from .collections import get_datasets, get_child_collections
+    from .utils import StatusMessage
+else:
+    from pyclowder.datasets import get_file_list
+    from pyclowder.collections import get_datasets, get_child_collections
+    from pyclowder.utils import StatusMessage
 
 # Some sources of urllib3 support warning suppression, but not all
 try:
@@ -48,10 +54,16 @@ def download(connector, host, key, fileid, intermediatefileid=None, ext=""):
 
     (inputfile, inputfilename) = tempfile.mkstemp(suffix=ext)
     try:
-        with os.fdopen(inputfile, "w") as outputfile:
-            for chunk in result.iter_content(chunk_size=10*1024):
-                outputfile.write(chunk)
-        return inputfilename
+        if (sys.version_info.major == 3):
+            with os.fdopen(inputfile, "wb") as outputfile:
+                for chunk in result.iter_content(chunk_size=10*1024):
+                    outputfile.write(chunk)
+            return inputfilename
+        else:
+            with os.fdopen(inputfile, "w") as outputfile:
+                for chunk in result.iter_content(chunk_size=10*1024):
+                    outputfile.write(chunk)
+            return inputfilename
     except:
         os.remove(inputfilename)
         raise
