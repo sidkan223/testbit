@@ -83,13 +83,13 @@ class Extractor(object):
         self.parser.add_argument('--num', '-n', type=int, nargs='?', default=1,
                                  help='number of parallel instances (default=1)')
         if (sys.version_info.major == 3):
-            self.parser.add_argument('--pickle', type=io.IOBase, nargs='*', dest="hpc_picklefile",
-                                    default=None, action='append',
-                                    help='pickle file that needs to be processed (only needed for HPC)')
+            self.parser.add_argument('--pickle', type=io.IOBase, nargs='*', dest="hpc_picklefile", default=None,
+                                     action='append',
+                                     help='pickle file that needs to be processed (only needed for HPC)')
         else:
-            self.parser.add_argument('--pickle', type=file, nargs='*', dest="hpc_picklefile",
-                                    default=None, action='append',
-                                    help='pickle file that needs to be processed (only needed for HPC)')
+            self.parser.add_argument('--pickle', type=file, nargs='*', dest="hpc_picklefile", default=None,
+                                     action='append',
+                                     help='pickle file that needs to be processed (only needed for HPC)')
         self.parser.add_argument('--register', '-r', nargs='?', dest="regstration_endpoints",
                                  default=registration_endpoints,
                                  help='Clowder registration URL (default=%s)' % registration_endpoints)
@@ -140,7 +140,7 @@ class Extractor(object):
                     logger.error("Missing URI for RabbitMQ")
                 else:
                     rabbitmq_key = []
-                    if not self.args.nobind  and sys.version_info.major == 2:
+                    if not self.args.nobind and sys.version_info.major == 2:
                         for key, value in self.extractor_info['process'].iteritems():
                             for mt in value:
                                 # Replace trailing '*' with '#'
