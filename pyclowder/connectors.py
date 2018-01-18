@@ -262,17 +262,18 @@ class Connector(object):
         # If only some files found locally, check & download any that were missed
         if len(located_files) > 0:
             for ds_file in missing_files:
-                # Download file to temp directory
-                inputfile = pyclowder.files.download(self, host, secret_key, ds_file['id'], ds_file['id'],
-                                                     ds_file['file_ext'])
-                # Also get file metadata in format expected by extractor
-                (file_md_dir, file_md_tmp) = self._download_file_metadata(host, secret_key, ds_file['id'],
-                                                                          ds_file['filepath'])
-                located_files.append(inputfile)
-                located_files.append(file_md_tmp)
-                tmp_files_created.append(inputfile)
-                tmp_files_created.append(file_md_tmp)
-                tmp_dirs_created.append(file_md_dir)
+                if 'file_ext' in ds_file:
+                    # Download file to temp directory
+                    inputfile = pyclowder.files.download(self, host, secret_key, ds_file['id'], ds_file['id'],
+                                                         ds_file['file_ext'])
+                    # Also get file metadata in format expected by extractor
+                    (file_md_dir, file_md_tmp) = self._download_file_metadata(host, secret_key, ds_file['id'],
+                                                                              ds_file['filepath'])
+                    located_files.append(inputfile)
+                    located_files.append(file_md_tmp)
+                    tmp_files_created.append(inputfile)
+                    tmp_files_created.append(file_md_tmp)
+                    tmp_dirs_created.append(file_md_dir)
 
             # Also, get dataset metadata (normally included in dataset .zip download file)
             ds_md = pyclowder.datasets.download_metadata(self, host, secret_key, resource["id"])
