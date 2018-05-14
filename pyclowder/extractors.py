@@ -57,8 +57,8 @@ class Extractor(object):
         # read values from environment variables, otherwise use defaults
         # this is the specific setup for the extractor
         # use RABBITMQ_QUEUE env to overwrite extractor's queue name
-        self.extractor_info['name'] = os.getenv('RABBITMQ_QUEUE', self.extractor_info['name'])
-        rabbitmq_queuename = self.extractor_info['name']
+        extractor_id = os.getenv('EXTRACTOR_ID', self.extractor_info['name'])
+        rabbitmq_queuename = os.getenv('RABBITMQ_QUEUE', self.extractor_info['name'])
         rabbitmq_uri = os.getenv('RABBITMQ_URI', "amqp://guest:guest@127.0.0.1/%2f")
         rabbitmq_exchange = os.getenv('RABBITMQ_EXCHANGE', "clowder")
         registration_endpoints = os.getenv('REGISTRATION_ENDPOINTS', "")
@@ -72,6 +72,8 @@ class Extractor(object):
 
         # create the actual extractor
         self.parser = argparse.ArgumentParser(description=self.extractor_info['description'])
+        self.parser.add_argument('--extractor_id', type=str, nargs='?', default=extractor_id,
+                                 help='unique id for this extractors (default=%s)')
         self.parser.add_argument('--connector', '-c', type=str, nargs='?', default=connector_default,
                                  choices=["RabbitMQ", "HPC", "Local"],
                                  help='connector to use (default=RabbitMQ)')
@@ -79,7 +81,7 @@ class Extractor(object):
                                  help='file or url or logging coonfiguration (default=None)')
         self.parser.add_argument('--num', '-n', type=int, nargs='?', default=1,
                                  help='number of parallel instances (default=1)')
-        self.parser.add_argument('--pickle', type=file, nargs='*', dest="hpc_picklefile",
+        self.parser.add_argument('--pickle', nargs='*', dest="hpc_picklefile",
                                  default=None, action='append',
                                  help='pickle file that needs to be processed (only needed for HPC)')
         self.parser.add_argument('--register', '-r', nargs='?', dest="regstration_endpoints",
@@ -129,14 +131,14 @@ class Extractor(object):
         """
         logger = logging.getLogger(__name__)
         connectors = list()
-        for connum in xrange(self.args.num):
+        for connum in range(self.args.num):
             if self.args.connector == "RabbitMQ":
                 if 'rabbitmq_uri' not in self.args:
                     logger.error("Missing URI for RabbitMQ")
                 else:
                     rabbitmq_key = []
                     if not self.args.nobind:
-                        for key, value in self.extractor_info['process'].iteritems():
+                        for key, value in self.extractor_info['process'].items():
                             for mt in value:
                                 # Replace trailing '*' with '#'
                                 mt = re.sub('(\*$)', '#', mt)
@@ -149,11 +151,13 @@ class Extractor(object):
                                         rabbitmq_key.append("*.%s.%s" % (key, mt.replace("/", ".")))
 
                     rconn = RabbitMQConnector(self.extractor_info,
+                                              self.args.extractor_id,
                                               check_message=self.check_message,
                                               process_message=self.process_message,
                                               rabbitmq_uri=self.args.rabbitmq_uri,
                                               rabbitmq_exchange=self.args.rabbitmq_exchange,
                                               rabbitmq_key=rabbitmq_key,
+                                              rabbitmq_queue=self.args.rabbitmq_queuename,
                                               mounted_paths=json.loads(self.args.mounted_paths))
                     rconn.connect()
                     rconn.register_extractor(self.args.regstration_endpoints)
@@ -164,6 +168,7 @@ class Extractor(object):
                     logger.error("Missing hpc_picklefile for HPCExtractor")
                 else:
                     hconn = HPCConnector(self.extractor_info,
+                                         self.args.extractor_id,
                                          check_message=self.check_message,
                                          process_message=self.process_message,
                                          picklefile=self.args.hpc_picklefile,
@@ -179,7 +184,9 @@ class Extractor(object):
                 elif not os.path.isfile(self.args.input_file_path):
                     logger.error("Local input file is not a regular file. Please check the path.")
                 else:
-                    local_connector = LocalConnector(self.extractor_info, self.args.input_file_path,
+                    local_connector = LocalConnector(self.extractor_info,
+                                                     self.args.extractor_id,
+                                                     self.args.input_file_path,
                                                      process_message=self.process_message,
                                                      output_file_path=self.args.output_file_path)
                     connectors.append(local_connector)
@@ -219,8 +226,6 @@ class Extractor(object):
         """
         logger = logging.getLogger(__name__)
         context_url = 'https://clowder.ncsa.illinois.edu/contexts/metadata.jsonld'
-        if not server:
-            server = "https://clowder.ncsa.illinois.edu/"
 
         # simple check to see if content is in context
         if logger.isEnabledFor(logging.DEBUG):
@@ -236,8 +241,9 @@ class Extractor(object):
             },
             'agent': {
                 '@type': 'cat:extractor',
-                'extractor_id': '%sextractors/%s/%s' %
-                                (server, self.extractor_info['name'], self.extractor_info['version'])
+                'extractor_id': self.args.extractor_id,
+                'version': self.extractor_info['version'],
+                'name': self.extractor_info['name']
             },
             'content': content
         }
