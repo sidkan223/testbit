@@ -13,3 +13,6 @@ ${DEBUG} docker build --tag clowder/extractors-binary-preview:onbuild sample-ext
 
 # build sample extractors
 ${DEBUG} docker build --tag clowder/extractors-wordcount:latest sample-extractors/wordcount
+
+# build contrib
+${DEBUG} docker build --tag clowder/extractors-monitor:latest contrib/monitor

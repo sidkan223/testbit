@@ -28,7 +28,7 @@ else
 fi
 
 # tag all images and push if needed
-for i in pyclowder extractors-wordcount; do
+for i in pyclowder extractors-monitor extractors-wordcount; do
     for v in ${VERSION}; do
         if [ "$v" != "latest" -o "$SERVER" != "" ]; then
             ${DEBUG} docker tag clowder/${i}:latest ${SERVER}clowder/${i}:${v}

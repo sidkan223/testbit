@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
 import datetime
+import hashlib
 import http.server
 import json
 import logging
 import os
 import threading
+import sys
 
 import pika
 
@@ -22,7 +24,7 @@ class MyServer(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.end_headers()
-        self.wfile.write(bytes(json.dumps(extractors), "utf-8"))
+        self.wfile.write(bytes(json.dumps(extractors), 'utf-8'))
 
 
 def http_server():
@@ -36,31 +38,31 @@ def http_server():
 def callback(ch, method, properties, body):
     data = json.loads(body)
     data['updated'] = datetime.datetime.now().isoformat()
-    if 'extractor_id' not in data and 'id' not in data and 'extractor_info' not in data and 'queue' not in data:
+    if 'id' not in data and 'extractor_info' not in data and 'queue' not in data:
         print("BAD DATA : %r " % body)
         return
 
-    extractor_id = data['extractor_id']
-    if extractor_id not in extractors:
-        extractors[extractor_id] = {
+    extractor_info = data['extractor_info']
+
+    if extractor_info['name'] not in extractors:
+        extractors[extractor_info['name']] = {}
+
+    if extractor_info['version'] not in extractors[extractor_info['name']]:
+        extractors[extractor_info['name']][extractor_info['version']] = {
+            'extractor_info': extractor_info,
             'queue': data['queue'],
-            'extractor_info': data['extractor_info'],
             'extractors': {}
         }
-    extractor = extractors[extractor_id]
+    extractor = extractors[extractor_info['name']][extractor_info['version']]
 
     extractor['extractors'][data['id']] = {
         'last_seen': datetime.datetime.now().isoformat()
     }
 
-    if json.dumps(data['extractor_info'], sort_keys=True) != json.dumps(extractor['extractor_info'], sort_keys=True):
-        print("ERROR : mismatched extractor_info %r != %r." % (data['extractor_info'], extractor['extractor_info']))
-        extractor['extractor_info'] = data['extractor_info']
-
     if extractor['queue'] != data['queue']:
         print("ERROR : mismatched queue names %s != %s." % (data['queue'], extractor['queue']))
         extractor['queue'] = data['queue']
-
+    print(json.dumps(extractors))
 
 def extractors_monitor():
     parameters = pika.URLParameters(rabbitmq_uri)
