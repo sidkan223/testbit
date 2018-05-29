@@ -550,7 +550,10 @@ class RabbitMQConnector(Connector):
         self.rabbitmq_uri = rabbitmq_uri
         self.rabbitmq_exchange = rabbitmq_exchange
         self.rabbitmq_key = rabbitmq_key
-        self.rabbitmq_queue = rabbitmq_queue
+        if rabbitmq_queue is None:
+            self.rabbitmq_queue = extractor_info['name']
+        else:
+            self.rabbitmq_queue = rabbitmq_queue
         self.channel = None
         self.connection = None
         self.consumer_tag = None
