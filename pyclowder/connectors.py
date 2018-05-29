@@ -59,12 +59,8 @@ class Connector(object):
 
     registered_clowder = list()
 
-    def __init__(self, extractor_info, extractor_id=None, check_message=None, process_message=None, ssl_verify=True, mounted_paths=None):
+    def __init__(self, extractor_info, check_message=None, process_message=None, ssl_verify=True, mounted_paths=None):
         self.extractor_info = extractor_info
-        if extractor_id:
-            self.extractor_id = extractor_id
-        else:
-            self.extractor_id = extractor_info['name']
         self.check_message = check_message
         self.process_message = process_message
         self.ssl_verify = ssl_verify
@@ -140,13 +136,13 @@ class Connector(object):
             resource_type = "file"
         elif message_type.find("metadata.added") > -1:
             resource_type = "metadata"
-        elif message_type == "extractors."+self.extractor_id:
+        elif message_type == "extractors." + self.extractor_info['name']:
             # This was a manually submitted extraction
             if datasetid == fileid:
                 resource_type = "dataset"
             else:
                 resource_type = "file"
-        elif message_type.endswith(self.extractor_id):
+        elif message_type.endswith(self.extractor_info['name']):
             # This was migrated from another queue (e.g. error queue) so use extractor default
             for key, value in self.extractor_info['process'].items():
                 if key == "dataset":
@@ -548,9 +544,9 @@ class RabbitMQConnector(Connector):
     """
 
     # pylint: disable=too-many-arguments
-    def __init__(self, extractor_info, extractor_id, rabbitmq_uri, rabbitmq_exchange=None, rabbitmq_key=None, rabbitmq_queue=None,
+    def __init__(self, extractor_info, rabbitmq_uri, rabbitmq_exchange=None, rabbitmq_key=None, rabbitmq_queue=None,
                  check_message=None, process_message=None, ssl_verify=True, mounted_paths=None):
-        Connector.__init__(self, extractor_info, extractor_id, check_message, process_message, ssl_verify, mounted_paths)
+        Connector.__init__(self, extractor_info, check_message, process_message, ssl_verify, mounted_paths)
         self.rabbitmq_uri = rabbitmq_uri
         self.rabbitmq_exchange = rabbitmq_exchange
         self.rabbitmq_key = rabbitmq_key
@@ -597,11 +593,10 @@ class RabbitMQConnector(Connector):
 
             self.channel.queue_bind(queue=self.rabbitmq_queue,
                                     exchange=self.rabbitmq_exchange,
-                                    routing_key="extractors." + self.extractor_id)
+                                    routing_key="extractors." + self.extractor_info['name'])
 
         # start the extractor announcer
-        self.announcer = RabbitMQBroadcast(self.rabbitmq_uri, self.extractor_info, self.extractor_id,
-                                           self.rabbitmq_queue, 5)
+        self.announcer = RabbitMQBroadcast(self.rabbitmq_uri, self.extractor_info, self.rabbitmq_queue, 5)
         self.announcer.start_thread()
 
     def listen(self):
@@ -622,7 +617,7 @@ class RabbitMQConnector(Connector):
             while self.channel and self.channel._consumer_infos:
                 self.channel.connection.process_data_events(time_limit=1)  # 1 second
                 if self.worker:
-                    self.worker.process_messages(self.channel)
+                    self.worker.process_messages(self.channel, self.rabbitmq_queue)
                     if self.worker.thread and not self.worker.thread.isAlive():
                         self.worker = None
         except SystemExit:
@@ -674,11 +669,10 @@ class RabbitMQConnector(Connector):
 
 
 class RabbitMQBroadcast:
-    def __init__(self, rabbitmq_uri, extractor_info, extractor_id, rabbitmq_queue, heartbeat):
+    def __init__(self, rabbitmq_uri, extractor_info, rabbitmq_queue, heartbeat):
         self.active = True
         self.rabbitmq_uri = rabbitmq_uri
         self.extractor_info = extractor_info
-        self.extractor_id = extractor_id
         self.rabbitmq_queue = rabbitmq_queue
         self.heartbeat = heartbeat
         self.id = str(uuid.uuid4())
@@ -701,7 +695,6 @@ class RabbitMQBroadcast:
         # create the message we will send
         message = {
             'id': self.id,
-            'extractor_id': self.extractor_id,
             'queue': self.rabbitmq_queue,
             'extractor_info': self.extractor_info
         }
@@ -750,7 +743,7 @@ class RabbitMQHandler(Connector):
         self.thread = threading.Thread(target=self._process_message, args=(json_body,))
         self.thread.start()
 
-    def process_messages(self, channel):
+    def process_messages(self, channel, rabbitmq_queue):
         while self.messages:
             msg = self.messages.pop(0)
 
@@ -768,14 +761,14 @@ class RabbitMQHandler(Connector):
             elif msg["type"] == 'error':
                 properties = pika.BasicProperties(delivery_mode=2, reply_to=self.header.reply_to)
                 channel.basic_publish(exchange='',
-                                      routing_key='error.' + self.extractor_id,
+                                      routing_key='error.' + rabbitmq_queue,
                                       properties=properties,
                                       body=self.body)
                 channel.basic_ack(self.method.delivery_tag)
 
             elif msg["type"] == 'resubmit':
                 retry_count = msg['retry_count']
-                queue = self.extractor_id
+                queue = rabbitmq_queue
                 properties = pika.BasicProperties(delivery_mode=2, reply_to=self.header.reply_to)
                 jbody = json.loads(self.body)
                 jbody['retry_count'] = retry_count
@@ -794,7 +787,7 @@ class RabbitMQHandler(Connector):
         status_report = dict()
         # TODO: Update this to check resource["type"] once Clowder better supports dataset events
         status_report['file_id'] = resource["id"]
-        status_report['extractor_id'] = self.extractor_id
+        status_report['extractor_id'] = self.extractor_info['name']
         status_report['status'] = "%s: %s" % (status, message)
         status_report['start'] = pyclowder.utils.iso8601time()
         self.messages.append({"type": "status",
@@ -819,9 +812,9 @@ class HPCConnector(Connector):
     """Takes pickle files and processes them."""
 
     # pylint: disable=too-many-arguments
-    def __init__(self, extractor_info, extractor_id, picklefile,
+    def __init__(self, extractor_info, picklefile,
                  check_message=None, process_message=None, ssl_verify=True, mounted_paths=None):
-        Connector.__init__(self, extractor_id, extractor_info, check_message, process_message, ssl_verify, mounted_paths)
+        Connector.__init__(self, extractor_info, check_message, process_message, ssl_verify, mounted_paths)
         self.picklefile = picklefile
         self.logfile = None
 
@@ -859,7 +852,7 @@ class HPCConnector(Connector):
                 with open(self.logfile, 'a') as log:
                     statusreport = dict()
                     statusreport['file_id'] = resource["id"]
-                    statusreport['extractor_id'] = self.extractor_id
+                    statusreport['extractor_id'] = self.extractor_info['name']
                     statusreport['status'] = "%s: %s" % (status, message)
                     statusreport['start'] = time.strftime('%Y-%m-%dT%H:%M:%S')
                     log.write(json.dumps(statusreport) + '\n')
@@ -876,8 +869,8 @@ class LocalConnector(Connector):
 
     """
 
-    def __init__(self, extractor_info, extractor_id, input_file_path, process_message=None, output_file_path=None):
-        super(LocalConnector, self).__init__(extractor_info, extractor_id, process_message=process_message)
+    def __init__(self, extractor_info, input_file_path, process_message=None, output_file_path=None):
+        super(LocalConnector, self).__init__(extractor_info, process_message=process_message)
         self.input_file_path = input_file_path
         self.output_file_path = output_file_path
         self.completed_processing = False

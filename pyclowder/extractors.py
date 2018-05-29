@@ -57,7 +57,6 @@ class Extractor(object):
         # read values from environment variables, otherwise use defaults
         # this is the specific setup for the extractor
         # use RABBITMQ_QUEUE env to overwrite extractor's queue name
-        extractor_id = os.getenv('EXTRACTOR_ID', self.extractor_info['name'])
         rabbitmq_queuename = os.getenv('RABBITMQ_QUEUE', self.extractor_info['name'])
         rabbitmq_uri = os.getenv('RABBITMQ_URI', "amqp://guest:guest@127.0.0.1/%2f")
         rabbitmq_exchange = os.getenv('RABBITMQ_EXCHANGE', "clowder")
@@ -72,8 +71,6 @@ class Extractor(object):
 
         # create the actual extractor
         self.parser = argparse.ArgumentParser(description=self.extractor_info['description'])
-        self.parser.add_argument('--extractor_id', type=str, nargs='?', default=extractor_id,
-                                 help='unique id for this extractors (default=%s)')
         self.parser.add_argument('--connector', '-c', type=str, nargs='?', default=connector_default,
                                  choices=["RabbitMQ", "HPC", "Local"],
                                  help='connector to use (default=RabbitMQ)')
@@ -151,7 +148,6 @@ class Extractor(object):
                                         rabbitmq_key.append("*.%s.%s" % (key, mt.replace("/", ".")))
 
                     rconn = RabbitMQConnector(self.extractor_info,
-                                              self.args.extractor_id,
                                               check_message=self.check_message,
                                               process_message=self.process_message,
                                               rabbitmq_uri=self.args.rabbitmq_uri,
@@ -168,7 +164,6 @@ class Extractor(object):
                     logger.error("Missing hpc_picklefile for HPCExtractor")
                 else:
                     hconn = HPCConnector(self.extractor_info,
-                                         self.args.extractor_id,
                                          check_message=self.check_message,
                                          process_message=self.process_message,
                                          picklefile=self.args.hpc_picklefile,
@@ -185,7 +180,6 @@ class Extractor(object):
                     logger.error("Local input file is not a regular file. Please check the path.")
                 else:
                     local_connector = LocalConnector(self.extractor_info,
-                                                     self.args.extractor_id,
                                                      self.args.input_file_path,
                                                      process_message=self.process_message,
                                                      output_file_path=self.args.output_file_path)
@@ -241,7 +235,8 @@ class Extractor(object):
             },
             'agent': {
                 '@type': 'cat:extractor',
-                'extractor_id': self.args.extractor_id,
+                'extractor_id': '%sextractors/%s/%s' %
+                                (server, self.extractor_info['name'], self.extractor_info['version']),
                 'version': self.extractor_info['version'],
                 'name': self.extractor_info['name']
             },
