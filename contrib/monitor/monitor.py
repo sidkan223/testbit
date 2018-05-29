@@ -62,7 +62,6 @@ def callback(ch, method, properties, body):
     if extractor['queue'] != data['queue']:
         print("ERROR : mismatched queue names %s != %s." % (data['queue'], extractor['queue']))
         extractor['queue'] = data['queue']
-    print(json.dumps(extractors))
 
 def extractors_monitor():
     parameters = pika.URLParameters(rabbitmq_uri)
