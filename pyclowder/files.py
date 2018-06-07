@@ -52,8 +52,9 @@ def download(connector, host, key, fileid, intermediatefileid=None, ext=""):
             for chunk in result.iter_content(chunk_size=10*1024):
                 outputfile.write(chunk)
         return inputfilename
-    finally:
+    except:
         os.remove(inputfilename)
+        raise
 
 
 def download_info(connector, host, key, fileid):
