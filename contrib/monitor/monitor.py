@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import threading
+import time
 import urllib.parse
 
 import pika
@@ -17,10 +18,15 @@ rabbitmq_mgmt_url = ''
 
 extractors = {}
 
+update_frequency = 60
+
 hostName = ""
 hostPort = 9999
 
 
+# ----------------------------------------------------------------------
+# WEB SERVER
+# ----------------------------------------------------------------------
 class MyServer(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -36,11 +42,13 @@ def http_server():
     finally:
         server.server_close()
 
-
+# ----------------------------------------------------------------------
+# MESSAGES IN QUEUES
+# ----------------------------------------------------------------------
 def get_mgmt_queue_messages(queue):
     global rabbitmq_username, rabbitmq_password
     try:
-        response = requests.get(rabbitmq_mgmt_url + queue, auth=(rabbitmq_username, rabbitmq_password))
+        response = requests.get(rabbitmq_mgmt_url + queue, auth=(rabbitmq_username, rabbitmq_password), timeout=5)
         response.raise_for_status()
         return response.json()['messages']
     except:
@@ -48,34 +56,36 @@ def get_mgmt_queue_messages(queue):
         return 0
 
 
-def get_queue_info(channel, queue):
-    global rabbitmq_mgmt_url
+def update_counts():
+    global extractors, update_frequency
 
-    if rabbitmq_mgmt_url == '':
-        # option 1, use queue_declare to get counts
-        queue = channel.queue_declare(queue=queue, durable=True)
-        old_waiting = queue.message_count
-        queue = channel.queue_declare(queue='extractors.' + queue, durable=True)
-        new_waiting = queue.message_count
-        queue = channel.queue_declare(queue='error.' + queue, durable=True)
-        errors = queue.message_count
+    while True:
+        for versions in extractors.values():
+            for extractor in versions.values():
 
-    else:
-        # option 2, use management api to get counts
-        old_waiting = get_mgmt_queue_messages(queue)
-        new_waiting = get_mgmt_queue_messages('extractors.' + queue)
-        errors = get_mgmt_queue_messages('error.' + queue)
+                # use management api to get counts
+                old_waiting = get_mgmt_queue_messages(extractor['queue'])
+                new_waiting = get_mgmt_queue_messages('extractors.' + extractor['queue'])
+                errors = get_mgmt_queue_messages('error.' + extractor['queue'])
 
-    return {
-        'queues': {
-            'total': old_waiting + new_waiting,
-            'direct': new_waiting,
-            'topic': old_waiting
-        },
-        'error': errors
-    }
+                extractor['messages'] = {
+                    'queues': {
+                        'total': old_waiting + new_waiting,
+                        'direct': new_waiting,
+                        'topic': old_waiting
+                    },
+                    'error': errors
+                }
+                
+        time.sleep(update_frequency)
 
+
+# ----------------------------------------------------------------------
+# EXTRACTOR HEARTBEATS
+# ----------------------------------------------------------------------
 def callback(ch, method, properties, body):
+    global extractors
+
     data = json.loads(body)
     data['updated'] = datetime.datetime.now().isoformat()
     if 'id' not in data and 'extractor_info' not in data and 'queue' not in data:
@@ -102,8 +112,6 @@ def callback(ch, method, properties, body):
     if extractor['queue'] != data['queue']:
         logging.error("mismatched queue names %s != %s." % (data['queue'], extractor['queue']))
         extractor['queue'] = data['queue']
-
-    extractor['messages'] = get_queue_info(ch, data['queue'])
 
 
 def extractors_monitor():
@@ -140,6 +148,9 @@ def extractors_monitor():
     channel.start_consuming()
 
 
+# ----------------------------------------------------------------------
+# MAIN
+# ----------------------------------------------------------------------
 if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)-15s [%(threadName)-15s] %(levelname)-7s :'
                                ' %(name)s - %(message)s',
@@ -149,4 +160,9 @@ if __name__ == "__main__":
     thread = threading.Thread(target=http_server)
     thread.setDaemon(True)
     thread.start()
+
+    thread = threading.Thread(target=update_counts)
+    thread.setDaemon(True)
+    thread.start()
+
     extractors_monitor()
