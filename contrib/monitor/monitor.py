@@ -1,17 +1,19 @@
 #!/usr/bin/env python
 
 import datetime
-import hashlib
 import http.server
 import json
 import logging
 import os
 import threading
-import sys
+import urllib.parse
 
 import pika
+import requests
 
 rabbitmq_uri = os.getenv('RABBITMQ_URI', 'amqp://guest:guest@localhost/%2F')
+rabbitmq_mgmt_port = os.getenv('RABBITMQ_MGMT_PORT', '15672')
+rabbitmq_mgmt_url = ''
 
 extractors = {}
 
@@ -35,11 +37,49 @@ def http_server():
         server.server_close()
 
 
+def get_mgmt_queue_messages(queue):
+    global rabbitmq_username, rabbitmq_password
+    try:
+        response = requests.get(rabbitmq_mgmt_url + queue, auth=(rabbitmq_username, rabbitmq_password))
+        response.raise_for_status()
+        return response.json()['messages']
+    except:
+        logging.exception("Error getting list of messages in %s" % queue)
+        return 0
+
+
+def get_queue_info(channel, queue):
+    global rabbitmq_mgmt_url
+
+    if rabbitmq_mgmt_url == '':
+        # option 1, use queue_declare to get counts
+        queue = channel.queue_declare(queue=queue, durable=True)
+        old_waiting = queue.message_count
+        queue = channel.queue_declare(queue='extractors.' + queue, durable=True)
+        new_waiting = queue.message_count
+        queue = channel.queue_declare(queue='error.' + queue, durable=True)
+        errors = queue.message_count
+
+    else:
+        # option 2, use management api to get counts
+        old_waiting = get_mgmt_queue_messages(queue)
+        new_waiting = get_mgmt_queue_messages('extractors.' + queue)
+        errors = get_mgmt_queue_messages('error.' + queue)
+
+    return {
+        'queues': {
+            'total': old_waiting + new_waiting,
+            'direct': new_waiting,
+            'topic': old_waiting
+        },
+        'error': errors
+    }
+
 def callback(ch, method, properties, body):
     data = json.loads(body)
     data['updated'] = datetime.datetime.now().isoformat()
     if 'id' not in data and 'extractor_info' not in data and 'queue' not in data:
-        print("BAD DATA : %r " % body)
+        logging.error("missing fields in json : %r " % body)
         return
 
     extractor_info = data['extractor_info']
@@ -56,16 +96,33 @@ def callback(ch, method, properties, body):
     extractor = extractors[extractor_info['name']][extractor_info['version']]
 
     extractor['extractors'][data['id']] = {
-        'last_seen': datetime.datetime.now().isoformat()
+        'last_seen': datetime.datetime.now().isoformat(),
     }
 
     if extractor['queue'] != data['queue']:
-        print("ERROR : mismatched queue names %s != %s." % (data['queue'], extractor['queue']))
+        logging.error("mismatched queue names %s != %s." % (data['queue'], extractor['queue']))
         extractor['queue'] = data['queue']
 
+    extractor['messages'] = get_queue_info(ch, data['queue'])
+
+
 def extractors_monitor():
-    parameters = pika.URLParameters(rabbitmq_uri)
-    connection = pika.BlockingConnection(parameters)
+    global rabbitmq_mgmt_url, rabbitmq_mgmt_port, rabbitmq_username, rabbitmq_password
+
+    params = pika.URLParameters(rabbitmq_uri)
+    connection = pika.BlockingConnection(params)
+
+    # create management url
+    rabbitmq_url = ''
+    if rabbitmq_mgmt_port != '':
+        if params.ssl:
+            rabbitmq_mgmt_url = 'https://'
+        else:
+            rabbitmq_mgmt_url = 'http://'
+        rabbitmq_mgmt_url = rabbitmq_mgmt_url + params.host + ':' + rabbitmq_mgmt_port +\
+                            '/api/queues/' + urllib.parse.quote_plus(params.virtual_host) + '/'
+        rabbitmq_username = params.credentials.username
+        rabbitmq_password = params.credentials.password
 
     # connect to channel
     channel = connection.channel()
@@ -84,6 +141,11 @@ def extractors_monitor():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(format='%(asctime)-15s [%(threadName)-15s] %(levelname)-7s :'
+                               ' %(name)s - %(message)s',
+                        level=logging.INFO)
+    logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.WARN)
+
     thread = threading.Thread(target=http_server)
     thread.setDaemon(True)
     thread.start()
