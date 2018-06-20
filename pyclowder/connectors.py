@@ -556,7 +556,7 @@ class RabbitMQConnector(Connector):
             self.rabbitmq_queue = rabbitmq_queue
         self.channel = None
         self.connection = None
-        self.consumer_tag = []
+        self.consumer_tag = None
         self.worker = None
 
     def connect(self):
@@ -611,9 +611,8 @@ class RabbitMQConnector(Connector):
             self.connect()
 
         # create listener
-        self.consumer_tag.append(self.channel.basic_consume(self.on_message, queue=self.rabbitmq_queue, no_ack=False))
-        self.consumer_tag.append(self.channel.basic_consume(self.on_message, queue="extractors." + self.rabbitmq_queue,
-                                                            no_ack=False))
+        self.consumer_tag = self.channel.basic_consume(self.on_message, queue=self.rabbitmq_queue,
+                                                       no_ack=False)
 
         # start listening
         logging.getLogger(__name__).info("Starting to listen for messages.")
@@ -653,9 +652,7 @@ class RabbitMQConnector(Connector):
     def stop(self):
         """Tell the connector to stop listening for messages."""
         if self.channel:
-            while self.consumer_tag:
-                tag = self.consumer_tag.pop()
-                self.channel.stop_consuming(tag)
+            self.channel.stop_consuming(self.consumer_tag)
 
     def alive(self):
         return self.connection is not None
