@@ -48,6 +48,7 @@ import pyclowder.datasets
 import pyclowder.files
 import pyclowder.utils
 
+tag_dict = {}
 
 class Connector(object):
     """ Class that will listen for messages.
@@ -539,6 +540,14 @@ class Connector(object):
 
         return response
 
+def callback(ch, method, properties, body):
+    print " [x] Received %r" % body
+    print properties
+    print method
+    tag_dict[method.consumer_tag].on_message(ch, method, properties, body)
+
+
+
 
 # pylint: disable=too-many-instance-attributes
 class RabbitMQConnector(Connector):
@@ -562,6 +571,22 @@ class RabbitMQConnector(Connector):
         self.consumer_tag = None
         self.worker = None
 
+    def on_message(self, channel, method, header, body):
+        """When the message is received this will call the generic _process_message in
+        the connector class. Any message will only be acked if the message is processed,
+        or there is an exception (except for SystemExit and SystemError exceptions).
+        """
+        print "----- > "+str(body)
+
+        json_body = json.loads(body)
+        print json_body["key"]
+        # if 'routing_key' not in json_body and method.routing_key:
+        #     json_body['routing_key'] = method.routing_key
+
+        self.worker = RabbitMQHandler(self.extractor_info, self.check_message, self.process_message,
+                                      self.ssl_verify, self.mounted_paths, method, header, body)
+        self.worker.start_thread(json_body)
+
     def connect(self):
         """connect to rabbitmq using URL parameters"""
 
@@ -578,6 +603,18 @@ class RabbitMQConnector(Connector):
         # declare the queue in case it does not exist
         self.channel.queue_declare(queue=self.extractor_info['name'], durable=True)
         self.channel.queue_declare(queue='error.'+self.extractor_info['name'], durable=True)
+
+        self.consumer_tag = self.channel.basic_consume(callback,
+                                   queue=self.extractor_info['name'],
+                                   no_ack=True)
+
+        print "My tag is "+str(self.consumer_tag)
+        tag_dict[self.consumer_tag] = self
+
+        logging.getLogger(__name__).info("Starting to listen for messages my way.")
+        self.channel.start_consuming()
+
+
 
         # register with an exchange
         if self.rabbitmq_exchange:
@@ -598,8 +635,8 @@ class RabbitMQConnector(Connector):
                                                 routing_key=key)
 
             self.channel.queue_bind(queue=self.extractor_info['name'],
-                                    exchange=self.rabbitmq_exchange,
-                                    routing_key="extractors." + self.extractor_info['name'])
+                                    exchange=self.rabbitmq_exchange)
+                                    # routing_key="extractors." + self.extractor_info['name'])
 
     def listen(self):
         """Listen for messages coming from RabbitMQ"""
@@ -607,10 +644,13 @@ class RabbitMQConnector(Connector):
         # check for connection
         if not self.channel:
             self.connect()
+        # self.channel.start_consuming()
 
         # create listener
         self.consumer_tag = self.channel.basic_consume(self.on_message, queue=self.extractor_info['name'],
                                                        no_ack=False)
+        tag_dict[self.consumer_tag] = self
+
 
         # start listening
         logging.getLogger(__name__).info("Starting to listen for messages.")
@@ -655,19 +695,6 @@ class RabbitMQConnector(Connector):
     def alive(self):
         return self.connection is not None
 
-    def on_message(self, channel, method, header, body):
-        """When the message is received this will call the generic _process_message in
-        the connector class. Any message will only be acked if the message is processed,
-        or there is an exception (except for SystemExit and SystemError exceptions).
-        """
-
-        json_body = json.loads(body)
-        if 'routing_key' not in json_body and method.routing_key:
-            json_body['routing_key'] = method.routing_key
-
-        self.worker = RabbitMQHandler(self.extractor_info, self.check_message, self.process_message,
-                                      self.ssl_verify, self.mounted_paths, method, header, body)
-        self.worker.start_thread(json_body)
 
 
 class RabbitMQHandler(Connector):
