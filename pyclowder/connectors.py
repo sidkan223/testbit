@@ -58,7 +58,8 @@ class Connector(object):
 
     registered_clowder = list()
 
-    def __init__(self, extractor_name, extractor_info, check_message=None, process_message=None, ssl_verify=True, mounted_paths=None):
+    def __init__(self, extractor_name, extractor_info, check_message=None, process_message=None, ssl_verify=True,
+                 mounted_paths=None):
         self.extractor_name = extractor_name
         self.extractor_info = extractor_info
         self.check_message = check_message
@@ -136,7 +137,8 @@ class Connector(object):
             resource_type = "file"
         elif message_type.find("metadata.added") > -1:
             resource_type = "metadata"
-        elif message_type == "extractors." + self.extractor_name or message_type == "extractors." + self.extractor_info['name']:
+        elif message_type == "extractors." + self.extractor_name \
+                or message_type == "extractors." + self.extractor_info['name']:
             # This was a manually submitted extraction
             if datasetid == fileid:
                 resource_type = "dataset"
@@ -554,7 +556,8 @@ class RabbitMQConnector(Connector):
     # pylint: disable=too-many-arguments
     def __init__(self, extractor_name, extractor_info, rabbitmq_uri, rabbitmq_exchange=None, rabbitmq_key=None,
                  check_message=None, process_message=None, ssl_verify=True, mounted_paths=None):
-        super(RabbitMQConnector, self).__init__(extractor_name, extractor_info, check_message, process_message, ssl_verify, mounted_paths)
+        super(RabbitMQConnector, self).__init__(extractor_name, extractor_info, check_message, process_message,
+                                                ssl_verify, mounted_paths)
         self.rabbitmq_uri = rabbitmq_uri
         self.rabbitmq_exchange = rabbitmq_exchange
         self.rabbitmq_key = rabbitmq_key
