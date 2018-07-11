@@ -668,8 +668,8 @@ class RabbitMQConnector(Connector):
         if 'routing_key' not in json_body and method.routing_key:
             json_body['routing_key'] = method.routing_key
 
-        self.worker = RabbitMQHandler(self.extractor_name, self.extractor_info, self.check_message, self.process_message,
-                                      self.ssl_verify, self.mounted_paths, method, header, body)
+        self.worker = RabbitMQHandler(self.extractor_name, self.extractor_info, self.check_message,
+                                      self.process_message, self.ssl_verify, self.mounted_paths, method, header, body)
         self.worker.start_thread(json_body)
 
 
@@ -682,7 +682,8 @@ class RabbitMQHandler(Connector):
 
     def __init__(self, extractor_name, extractor_info, check_message=None, process_message=None, ssl_verify=True,
                  mounted_paths=None, method=None, header=None, body=None):
-        super(RabbitMQHandler, self).__init__(extractor_name, extractor_info, check_message, process_message, ssl_verify, mounted_paths)
+        super(RabbitMQHandler, self).__init__(extractor_name, extractor_info, check_message, process_message,
+                                              ssl_verify, mounted_paths)
         self.method = method
         self.header = header
         self.body = body
@@ -795,7 +796,8 @@ class HPCConnector(Connector):
     # pylint: disable=too-many-arguments
     def __init__(self, extractor_name, extractor_info, picklefile,
                  check_message=None, process_message=None, ssl_verify=True, mounted_paths=None):
-        super(HPCConnector, self).__init__(extractor_name, extractor_info, check_message, process_message, ssl_verify, mounted_paths)
+        super(HPCConnector, self).__init__(extractor_name, extractor_info, check_message, process_message,
+                                           ssl_verify, mounted_paths)
         self.picklefile = picklefile
         self.logfile = None
 
