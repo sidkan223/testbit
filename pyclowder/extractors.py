@@ -79,7 +79,7 @@ class Extractor(object):
                                  help='file or url or logging coonfiguration (default=None)')
         self.parser.add_argument('--num', '-n', type=int, nargs='?', default=1,
                                  help='number of parallel instances (default=1)')
-        self.parser.add_argument('--pickle', type=file, nargs='*', dest="hpc_picklefile",
+        self.parser.add_argument('--pickle', type=open, nargs='*', dest="hpc_picklefile",
                                  default=None, action='append',
                                  help='pickle file that needs to be processed (only needed for HPC)')
         self.parser.add_argument('--register', '-r', nargs='?', dest="regstration_endpoints",
@@ -129,14 +129,14 @@ class Extractor(object):
         """
         logger = logging.getLogger(__name__)
         connectors = list()
-        for connum in xrange(self.args.num):
+        for connum in range(self.args.num):
             if self.args.connector == "RabbitMQ":
                 if 'rabbitmq_uri' not in self.args:
                     logger.error("Missing URI for RabbitMQ")
                 else:
                     rabbitmq_key = []
                     if not self.args.nobind:
-                        for key, value in self.extractor_info['process'].iteritems():
+                        for key, value in self.extractor_info['process'].items():
                             for mt in value:
                                 # Replace trailing '*' with '#'
                                 mt = re.sub('(\*$)', '#', mt)

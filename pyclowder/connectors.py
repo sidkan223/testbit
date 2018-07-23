@@ -143,7 +143,7 @@ class Connector(object):
                 resource_type = "file"
         elif message_type.endswith(self.extractor_info['name']):
             # This was migrated from another queue (e.g. error queue) so use extractor default
-            for key, value in self.extractor_info['process'].iteritems():
+            for key, value in self.extractor_info['process'].items():
                 if key == "dataset":
                     resource_type = "dataset"
                 else:
@@ -306,12 +306,8 @@ class Connector(object):
         """
 
         logger = logging.getLogger(__name__)
+        host = 'https://api.box.com/2.0/files/'
 
-        host = body.get('host', '')
-        if host == '':
-            return
-        elif not host.endswith('/'):
-            host += '/'
         secret_key = body.get('secretKey', '')
         retry_count = 0 if 'retry_count' not in body else body['retry_count']
         resource = self._build_resource(body, host, secret_key)
@@ -342,6 +338,12 @@ class Connector(object):
                         found_local = False
                         try:
                             if check_result != pyclowder.utils.CheckMessage.bypass:
+                                resource["id"] = body.get('fileID')
+                                secret_key = body.get('token')
+                                write_token = body.get('writeToken')
+                                print("-------> "+write_token)
+
+                                resource["metadataTemplate"] = body.get('metadataTemplate')
                                 file_metadata = pyclowder.files.download_info(self, host, secret_key, resource["id"])
                                 file_path = self._check_for_local_file(host, secret_key, file_metadata)
                                 if not file_path:
@@ -352,7 +354,7 @@ class Connector(object):
                                     found_local = True
                                 resource['local_paths'] = [file_path]
 
-                            self.process_message(self, host, secret_key, resource, body)
+                            self.process_message(self, host, write_token, resource, body)
                         finally:
                             if file_path is not None and not found_local:
                                 try:

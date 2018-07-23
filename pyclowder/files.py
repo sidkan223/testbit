@@ -58,6 +58,7 @@ def download(connector, host, key, fileid, intermediatefileid=None, ext=""):
 
 
 def download_info(connector, host, key, fileid):
+    from boxsdk import OAuth2
     """Download file summary metadata from Clowder.
 
     Keyword arguments:
@@ -67,12 +68,48 @@ def download_info(connector, host, key, fileid):
     fileid -- the file to fetch metadata of
     """
 
-    url = '%sapi/files/%s/metadata?key=%s' % (host, fileid, key)
+    """
+    oauth = OAuth2(
+        client_id='YOUR_CLIENT_ID',
+        client_secret='YOUR_CLIENT_SECRET',
+        store_tokens=your_store_tokens_callback_method,
+    )
 
+    auth_url, csrf_token = oauth.get_authorization_url('http://YOUR_REDIRECT_URL')
+
+    from boxsdk import Client
+
+    client = Client(oauth)
+    download_url = client.file(file_id='SOME_FILE_ID').get_shared_link_download_url()
+    """
+    url = 'https://api.box.com/2.0/files/%s/content' % (fileid)
+    # auth_token = 'DINjypaHFelTP2hEsCTbIFL2iKiab02O'
+    headers = {"Authorization": "Bearer %s" % key}
+    # headers = {"Authorization": "Bearer DINjypaHFelTP2hEsCTbIFL2iKiab02O", "content-type": "application/json"}
+
+    # req = urllib2.Request(url, None, {"Authorization": "Bearer %s" % auth_token})
+
+    # headers = {'Authorization': 'Bearer {0}'.format(key)}
     # fetch data
-    result = connector.get(url, stream=True, verify=connector.ssl_verify if connector else True)
+    # result = connector.get(url, stream=True, verify=connector.ssl_verify if connector else True)
+    # result = requests.get(url, None, headers=headers)
 
-    return result.json()
+    (inputfile, downloadfile) = tempfile.mkstemp()
+
+    # downloadfile = os.path.join(downloadfile, extension)
+
+    try:
+        file_metadata = dict()
+        r = requests.get(url, headers=headers, stream=True)
+        with open(downloadfile, 'wb') as fd:
+            for chunk in r.iter_content(1024 * 1024):
+                fd.write(chunk)
+        file_metadata['filepath'] = downloadfile
+        return file_metadata
+
+    except Exception as ex:
+        print('exception: ' + str(ex))
+        raise Exception()
 
 
 def download_metadata(connector, host, key, fileid, extractor=None):
@@ -167,25 +204,21 @@ def submit_extractions_by_collection(connector, host, key, collectionid, extract
         for coll in childcolls:
             submit_extractions_by_collection(connector, host, key, coll['id'], extractorname, ext, recursive)
 
-
-def upload_metadata(connector, host, key, fileid, metadata):
-    """Upload file JSON-LD metadata to Clowder.
-
-    Keyword arguments:
-    connector -- connector information, used to get missing parameters and send status updates
-    host -- the clowder host, including http and port, should end with a /
-    key -- the secret key to login to clowder
-    fileid -- the file that is currently being processed
-    metadata -- the metadata to be uploaded
+def upload_metadata(connector, host, metadataTemplate, key, fileid, metadata):
+    logger = logging.getLogger(__name__)
+    url = 'https://api.box.com/2.0/files/%s/metadata/%s' % (fileid, metadataTemplate)
+    logger.debug("Setting metadata as "+url)
+    # url = 'https://api.box.com/2.0/files/300876430157/metadata/enterprise_61647055/wordCount'
+    headers = {"Authorization": "Bearer %s" % key,  "content-type": "application/json"}
+    data = json.dumps(metadata.get('content'))
+    r = requests.post(url,data=data,headers=headers)
+    logger.debug("[%d], on .. %s" % (r.status_code, str(fileid)))
     """
-
-    connector.status_update(StatusMessage.processing, {"type": "file", "id": fileid}, "Uploading file metadata.")
-
-    headers = {'Content-Type': 'application/json'}
-    url = '%sapi/files/%s/metadata.jsonld?key=%s' % (host, fileid, key)
-    result = connector.post(url, headers=headers, data=json.dumps(metadata),
-                            verify=connector.ssl_verify if connector else True)
-
+    if r.status_code == 409:
+        logger.debug("[%d], do delete on .. %d" % (r.status_code, fileid))
+        r = requests.delete(url, headers=headers)
+        upload_metadata(connector, host, metadataTemplate, key, fileid, metadata)
+    """
 
 # pylint: disable=too-many-arguments
 def upload_preview(connector, host, key, fileid, previewfile, previewmetadata, preview_mimetype=None):
