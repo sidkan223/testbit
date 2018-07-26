@@ -662,8 +662,11 @@ class RabbitMQConnector(Connector):
         the connector class. Any message will only be acked if the message is processed,
         or there is an exception (except for SystemExit and SystemError exceptions).
         """
-
-        json_body = json.loads(body)
+        if isinstance(body, str):
+            json_body = json.loads(body)
+        else:
+            json_body = json.loads(body.decode("utf-8"))
+            
         if 'routing_key' not in json_body and method.routing_key:
             json_body['routing_key'] = method.routing_key
 
