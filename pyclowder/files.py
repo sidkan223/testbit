@@ -206,7 +206,8 @@ def submit_extractions_by_collection(connector, host, key, collectionid, extract
 
 def upload_metadata(connector, host, metadataTemplate, key, fileid, metadata):
     logger = logging.getLogger(__name__)
-    url = 'https://api.box.com/2.0/files/%s/metadata/%s' % (fileid, metadataTemplate)
+    # url = 'https://api.box.com/2.0/files/%s/metadata/%s' % (fileid, metadataTemplate)
+    url = 'https://api.box.com/2.0/files/%s/metadata/global/boxSkillsCards' % (fileid)
     logger.debug("Setting metadata as "+url)
     # url = 'https://api.box.com/2.0/files/300876430157/metadata/enterprise_61647055/wordCount'
     headers = {"Authorization": "Bearer %s" % key,  "content-type": "application/json"}
