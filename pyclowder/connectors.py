@@ -59,7 +59,9 @@ class Connector(object):
 
     registered_clowder = list()
 
-    def __init__(self, extractor_info, check_message=None, process_message=None, ssl_verify=True, mounted_paths=None):
+    def __init__(self, extractor_name, extractor_info, check_message=None, process_message=None, ssl_verify=True,
+                 mounted_paths=None):
+        self.extractor_name = extractor_name
         self.extractor_info = extractor_info
         self.check_message = check_message
         self.process_message = process_message
@@ -136,13 +138,14 @@ class Connector(object):
             resource_type = "file"
         elif message_type.find("metadata.added") > -1:
             resource_type = "metadata"
-        elif message_type == "extractors." + self.extractor_info['name']:
+        elif message_type == "extractors." + self.extractor_name \
+                or message_type == "extractors." + self.extractor_info['name']:
             # This was a manually submitted extraction
             if datasetid == fileid:
                 resource_type = "dataset"
             else:
                 resource_type = "file"
-        elif message_type.endswith(self.extractor_info['name']):
+        elif message_type.endswith(self.extractor_info['name']) or message_type.endswith(self.extractor_name):
             # This was migrated from another queue (e.g. error queue) so use extractor default
             for key, value in self.extractor_info['process'].items():
                 if key == "dataset":
@@ -544,9 +547,11 @@ class RabbitMQConnector(Connector):
     """
 
     # pylint: disable=too-many-arguments
-    def __init__(self, extractor_info, rabbitmq_uri, rabbitmq_exchange=None, rabbitmq_key=None, rabbitmq_queue=None,
+    def __init__(self, extractor_name, extractor_info,
+                 rabbitmq_uri, rabbitmq_exchange=None, rabbitmq_key=None, rabbitmq_queue=None,
                  check_message=None, process_message=None, ssl_verify=True, mounted_paths=None):
-        Connector.__init__(self, extractor_info, check_message, process_message, ssl_verify, mounted_paths)
+        super(RabbitMQConnector, self).__init__(extractor_name, extractor_info, check_message, process_message,
+                                                ssl_verify, mounted_paths)
         self.rabbitmq_uri = rabbitmq_uri
         self.rabbitmq_exchange = rabbitmq_exchange
         self.rabbitmq_key = rabbitmq_key
@@ -575,7 +580,7 @@ class RabbitMQConnector(Connector):
         # declare the queue in case it does not exist
         self.channel.queue_declare(queue=self.rabbitmq_queue, durable=True)
         self.channel.queue_declare(queue='extractors.' + self.rabbitmq_queue, durable=True)
-        self.channel.queue_declare(queue='error.' + self.rabbitmq_queue, durable=True)
+        self.channel.queue_declare(queue='error.'+self.rabbitmq_queue, durable=True)
 
         # register with an exchange
         if self.rabbitmq_exchange:
@@ -597,7 +602,7 @@ class RabbitMQConnector(Connector):
 
             self.channel.queue_bind(queue=self.rabbitmq_queue,
                                     exchange=self.rabbitmq_exchange,
-                                    routing_key="extractors." + self.extractor_info['name'])
+                                    routing_key="extractors." + self.extractor_name)
 
         # start the extractor announcer
         self.announcer = RabbitMQBroadcast(self.rabbitmq_uri, self.extractor_info, self.rabbitmq_queue, 5)
@@ -611,8 +616,7 @@ class RabbitMQConnector(Connector):
             self.connect()
 
         # create listener
-        self.consumer_tag = self.channel.basic_consume(self.on_message, queue=self.rabbitmq_queue,
-                                                       no_ack=False)
+        self.consumer_tag = self.channel.basic_consume(self.on_message, queue=self.rabbitmq_queue, no_ack=False)
 
         # start listening
         logging.getLogger(__name__).info("Starting to listen for messages.")
@@ -667,8 +671,8 @@ class RabbitMQConnector(Connector):
         if 'routing_key' not in json_body and method.routing_key:
             json_body['routing_key'] = method.routing_key
 
-        self.worker = RabbitMQHandler(self.extractor_info, self.check_message, self.process_message,
-                                      self.ssl_verify, self.mounted_paths, method, header, body)
+        self.worker = RabbitMQHandler(self.extractor_name, self.extractor_info, self.check_message,
+                                      self.process_message, self.ssl_verify, self.mounted_paths, method, header, body)
         self.worker.start_thread(json_body)
 
 
@@ -723,9 +727,10 @@ class RabbitMQHandler(Connector):
     a queue of messages that the super- loop can access and send later.
     """
 
-    def __init__(self, extractor_info, check_message=None, process_message=None, ssl_verify=True,
+    def __init__(self, extractor_name, extractor_info, check_message=None, process_message=None, ssl_verify=True,
                  mounted_paths=None, method=None, header=None, body=None):
-        Connector.__init__(self, extractor_info, check_message, process_message, ssl_verify, mounted_paths)
+        super(RabbitMQHandler, self).__init__(extractor_name, extractor_info, check_message, process_message,
+                                              ssl_verify, mounted_paths)
         self.method = method
         self.header = header
         self.body = body
@@ -836,9 +841,10 @@ class HPCConnector(Connector):
     """Takes pickle files and processes them."""
 
     # pylint: disable=too-many-arguments
-    def __init__(self, extractor_info, picklefile,
+    def __init__(self, extractor_name, extractor_info, picklefile,
                  check_message=None, process_message=None, ssl_verify=True, mounted_paths=None):
-        Connector.__init__(self, extractor_info, check_message, process_message, ssl_verify, mounted_paths)
+        super(HPCConnector, self).__init__(extractor_name, extractor_info, check_message, process_message,
+                                           ssl_verify, mounted_paths)
         self.picklefile = picklefile
         self.logfile = None
 
@@ -893,8 +899,8 @@ class LocalConnector(Connector):
 
     """
 
-    def __init__(self, extractor_info, input_file_path, process_message=None, output_file_path=None):
-        super(LocalConnector, self).__init__(extractor_info, process_message=process_message)
+    def __init__(self, extractor_name, extractor_info, input_file_path, process_message=None, output_file_path=None):
+        super(LocalConnector, self).__init__(extractor_name, extractor_info, process_message=process_message)
         self.input_file_path = input_file_path
         self.output_file_path = output_file_path
         self.completed_processing = False
