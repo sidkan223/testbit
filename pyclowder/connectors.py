@@ -417,7 +417,10 @@ class Connector(object):
             status = "Error processing : " + exc.message
             logger.exception("[%s] %s", resource['id'], status)
             self.status_update(pyclowder.utils.StatusMessage.error, resource, status)
-            self.message_error(resource)
+            if retry_count < 10:
+                self.message_resubmit(resource, retry_count + 1)
+            else:
+                self.message_error(resource)
 
     def register_extractor(self, endpoints):
         """Register extractor info with Clowder.
