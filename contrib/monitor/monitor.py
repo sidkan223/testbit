@@ -42,6 +42,7 @@ def http_server():
     finally:
         server.server_close()
 
+
 # ----------------------------------------------------------------------
 # MESSAGES IN QUEUES
 # ----------------------------------------------------------------------
@@ -62,7 +63,6 @@ def update_counts():
     while True:
         for versions in extractors.values():
             for extractor in versions.values():
-
                 # use management api to get counts
                 old_waiting = get_mgmt_queue_messages(extractor['queue'])
                 new_waiting = get_mgmt_queue_messages('extractors.' + extractor['queue'])
@@ -76,7 +76,7 @@ def update_counts():
                     },
                     'error': errors
                 }
-                
+
         time.sleep(update_frequency)
 
 
@@ -127,8 +127,8 @@ def extractors_monitor():
             rabbitmq_mgmt_url = 'https://'
         else:
             rabbitmq_mgmt_url = 'http://'
-        rabbitmq_mgmt_url = rabbitmq_mgmt_url + params.host + ':' + rabbitmq_mgmt_port +\
-                            '/api/queues/' + urllib.parse.quote_plus(params.virtual_host) + '/'
+        rabbitmq_mgmt_url = "%s%s:%d/api/queues/%s/" % (rabbitmq_mgmt_url, params.host, rabbitmq_mgmt_port,
+                                                        urllib.parse.quote_plus(params.virtual_host))
         rabbitmq_username = params.credentials.username
         rabbitmq_password = params.credentials.password
 
