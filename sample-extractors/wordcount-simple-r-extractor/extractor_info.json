@@ -1,13 +1,15 @@
 {
   "@context": "http://clowder.ncsa.illinois.edu/contexts/extractors.jsonld",
-  "name": "ncsa.example.r",
+  "name": "ncsa.wordcount.R",
   "version": "1.0",
-  "description": "Simple example using R code.",
+  "description": "WordCount simple extractor. Counts the number of characters, words and lines in the text file that was uploaded.",
   "author": "Rob Kooper <kooper@illinois.edu>",
   "contributors": [],
   "contexts": [
     {
-      "a-string": "http://clowder.ncsa.illinois.edu/metadata/r#a-string"
+      "lines": "http://clowder.ncsa.illinois.edu/metadata/ncsa.wordcount#lines",
+      "words": "http://clowder.ncsa.illinois.edu/metadata/ncsa.wordcount#words",
+      "characters": "http://clowder.ncsa.illinois.edu/metadata/ncsa.wordcount#characters"
     }
   ],
   "repository": {
