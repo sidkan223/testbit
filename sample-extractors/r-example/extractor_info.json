@@ -1,0 +1,26 @@
+{
+  "@context": "http://clowder.ncsa.illinois.edu/contexts/extractors.jsonld",
+  "name": "ncsa.example.r",
+  "version": "1.0",
+  "description": "Simple example using R code.",
+  "author": "Rob Kooper <kooper@illinois.edu>",
+  "contributors": [],
+  "contexts": [
+    {
+      "a-string": "http://clowder.ncsa.illinois.edu/metadata/r#a-string"
+    }
+  ],
+  "repository": {
+    "repType": "git",
+    "repUrl": "https://opensource.ncsa.illinois.edu/stash/scm/cats/pyclowder.git"
+  },
+  "process": {
+    "file": [
+      "text/*",
+      "application/json"
+    ]
+  },
+  "external_services": [],
+  "dependencies": [],
+  "bibtex": []
+}
