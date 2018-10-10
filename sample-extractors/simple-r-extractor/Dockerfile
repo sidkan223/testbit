@@ -1,7 +1,7 @@
 FROM clowder/pyclowder
 
-ENV R_SCRIPT=""
-ENV R_FUNCTION=""
+ENV R_SCRIPT="" \
+    R_FUNCTION=""
 
 RUN apt-get -q -q update \
     && apt-get -y install --no-install-recommends r-base-core r-base-dev python-dev \
@@ -20,9 +20,9 @@ ONBUILD RUN if [ -e packages.apt ]; then \
             fi
 
 # install any r packages
-ONBUILD COPY rpackages* Dockerfile /home/clowder/
-ONBUILD RUN if [ -e rpackages ]; then \
-                cat rpackages; \
+ONBUILD COPY docker.R* Dockerfile /home/clowder/
+ONBUILD RUN if [ -e docker.R ]; then \
+                Rscript docker.R; \
             fi
 
 # copy all files
