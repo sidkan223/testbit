@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+- files.upload_preview does not require section_id for metadata [CATS-935](https://opensource.ncsa.illinois.edu/jira/browse/CATS-935)
 
 ### Added
 - Docker compose file for starting up the Clowder stack [BD-2226](https://opensource.ncsa.illinois.edu/jira/browse/BD-2226)
