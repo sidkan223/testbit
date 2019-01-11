@@ -384,8 +384,8 @@ class Connector(object):
 
                             self.process_message(self, host, secret_key, resource, body)
 
-                            clowderurl ="%sfiles/%s" % (host, body.get('id', ''))
-                            # notificatino of extraction job is done by email. 
+                            clowderurl = "%sfiles/%s" % (host, body.get('id', ''))
+                            # notificatino of extraction job is done by email.
                             self.email(emailaddrlist, clowderurl)
                         finally:
                             if file_path is not None and not found_local:
