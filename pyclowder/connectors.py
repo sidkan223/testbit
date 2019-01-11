@@ -336,7 +336,9 @@ class Connector(object):
         """
 
         logger = logging.getLogger(__name__)
-        emailaddrlist = body.get('parameters').get('emails')
+        emailaddrlist = None
+        if body.get('parameters'):
+            emailaddrlist = body.get('parameters').get('emails')
         host = body.get('host', '')
         if host == '':
             return
