@@ -48,6 +48,10 @@ import pyclowder.datasets
 import pyclowder.files
 import pyclowder.utils
 
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
 
 class Connector(object):
     """ Class that will listen for messages.
@@ -69,6 +73,29 @@ class Connector(object):
             self.mounted_paths = {}
         else:
             self.mounted_paths = mounted_paths
+
+        self.smtp_server = os.getenv('EMAIL_SERVER', None)
+        self.emailmsg = MIMEMultipart('alternative')
+        self.emailmsg['Subject'] = 'extractor [%s] is done' % self.extractor_name
+        self.emailmsg['From'] = os.getenv('EMAIL_SNDER', None)
+
+    def email(self, emaillist, clowderurl):
+        """ Send extraction completion as the email notification """
+        logger = logging.getLogger(__name__)
+        if self.smtp_server:
+            server = smtplib.SMTP(self.smtp_server)
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = self.emailmsg['Subject']
+            msg['From'] = self.emailmsg['From']
+            content = MIMEText(clowderurl, 'plain')
+            msg.attach(content)
+            try:
+                logger.debug("send email notification to %s" % emaillist)
+                server.sendmail(msg['From'], emaillist, msg.as_string())
+            except:
+                logger.warning("failed to send email notification to %s" % emaillist)
+                pass
+            server.quit()
 
     def listen(self):
         """Listen for incoming messages.
@@ -309,7 +336,7 @@ class Connector(object):
         """
 
         logger = logging.getLogger(__name__)
-
+        emailaddrlist = body.get('parameters').get('emails')
         host = body.get('host', '')
         if host == '':
             return
@@ -356,6 +383,10 @@ class Connector(object):
                                 resource['local_paths'] = [file_path]
 
                             self.process_message(self, host, secret_key, resource, body)
+
+                            clowderurl = "%sfiles/%s" % (host, body.get('id', ''))
+                            # notificatino of extraction job is done by email.
+                            self.email(emailaddrlist, clowderurl)
                         finally:
                             if file_path is not None and not found_local:
                                 try:
@@ -372,6 +403,9 @@ class Connector(object):
                             resource['local_paths'] = file_paths
 
                             self.process_message(self, host, secret_key, resource, body)
+                            clowderurl = "%sdatasets/%s" % (host, body.get('datasetId', ''))
+                            # notificatino of extraction job is done by email.
+                            self.email(emailaddrlist, clowderurl)
                         finally:
                             for tmp_f in tmp_files:
                                 try:
