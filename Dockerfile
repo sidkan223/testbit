@@ -5,6 +5,8 @@ ENV RABBITMQ_URI="amqp://guest:guest@rabbitmq:5672/%2F" \
     RABBITMQ_EXCHANGE="clowder" \
     RABBITMQ_QUEUE="" \
     REGISTRATION_ENDPOINTS="" \
+    EMAIL_SERVER="" \
+    EMAIL_SNDER="extractor" \
     MAIN_SCRIPT=""
 
 # install python
