@@ -82,7 +82,7 @@ class Connector(object):
     def email(self, emaillist, clowderurl):
         """ Send extraction completion as the email notification """
         logger = logging.getLogger(__name__)
-        if self.smtp_server:
+        if emaillist and self.smtp_server:
             server = smtplib.SMTP(self.smtp_server)
             msg = MIMEMultipart('alternative')
             msg['Subject'] = self.emailmsg['Subject']
