@@ -403,9 +403,9 @@ class Connector(object):
                             resource['local_paths'] = file_paths
 
                             self.process_message(self, host, secret_key, resource, body)
-                            clowderurl ="%sdatasets/%s" % (host, body.get('datasetId', ''))
-                            # notificatino of extraction job is done by email. 
-                            self.email(emailaddrlist, clowderurl) 
+                            clowderurl = "%sdatasets/%s" % (host, body.get('datasetId', ''))
+                            # notificatino of extraction job is done by email.
+                            self.email(emailaddrlist, clowderurl)
                         finally:
                             for tmp_f in tmp_files:
                                 try:
