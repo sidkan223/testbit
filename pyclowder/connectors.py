@@ -337,8 +337,8 @@ class Connector(object):
 
         logger = logging.getLogger(__name__)
         emailaddrlist = None
-        if body.get('parameters'):
-            emailaddrlist = body.get('parameters').get('emails')
+        if body.get('notifies'):
+            emailaddrlist = body.get('notifies')
         host = body.get('host', '')
         if host == '':
             return
