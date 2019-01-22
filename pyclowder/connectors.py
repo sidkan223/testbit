@@ -51,7 +51,7 @@ import pyclowder.utils
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-
+from string import Template
 
 class Connector(object):
     """ Class that will listen for messages.
@@ -74,10 +74,26 @@ class Connector(object):
         else:
             self.mounted_paths = mounted_paths
 
-        self.smtp_server = os.getenv('EMAIL_SERVER', None)
-        self.emailmsg = MIMEMultipart('alternative')
-        self.emailmsg['Subject'] = 'extractor [%s] is done' % self.extractor_name
-        self.emailmsg['From'] = os.getenv('EMAIL_SNDER', None)
+        filename = 'notifications.json'
+        self.smtp_server = None
+        if os.path.isfile(filename):
+            try:
+                with open(filename) as notifications_file:
+                    notifications_content = notifications_file.read()
+                    notifications_template = Template(notifications_content)
+                    notifications_json = json.loads(notifications_content)
+                    notifications_json['extractor_name'] = extractor_name
+                    notifications = notifications_template.safe_substitute(notifications_json)
+
+                    notifications_interpolate = json.loads(notifications)
+                    self.smtp_server = os.getenv('EMAIL_SERVER', None)
+                    self.emailmsg = MIMEMultipart('alternative')
+                    self.emailmsg['From'] = os.getenv('EMAIL_SNDER', notifications_json.get('sender'))
+                    self.emailmsg['Subject'] = notifications_interpolate.get('notifications').get('email').get(
+                        'subject')
+                    self.emailmsg['Body'] = notifications_interpolate.get('notifications').get('email').get('body')
+            except Exception:  # pylint: disable=broad-except
+                print("Error loading notifications.json")
 
     def email(self, emaillist, clowderurl):
         """ Send extraction completion as the email notification """
@@ -87,10 +103,13 @@ class Connector(object):
             msg = MIMEMultipart('alternative')
             msg['Subject'] = self.emailmsg['Subject']
             msg['From'] = self.emailmsg['From']
+            content = MIMEText(self.emailmsg['Body'], 'plain')
+            msg.attach(content)
             content = MIMEText(clowderurl, 'plain')
             msg.attach(content)
+
             try:
-                logger.debug("send email notification to %s" % emaillist)
+                logger.debug("send email notification to %s, %s " % (emaillist, msg.as_string()))
                 server.sendmail(msg['From'], emaillist, msg.as_string())
             except:
                 logger.warning("failed to send email notification to %s" % emaillist)
@@ -339,6 +358,7 @@ class Connector(object):
         emailaddrlist = None
         if body.get('notifies'):
             emailaddrlist = body.get('notifies')
+            logger.debug(emailaddrlist)
         host = body.get('host', '')
         if host == '':
             return

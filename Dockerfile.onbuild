@@ -9,7 +9,7 @@ ONBUILD RUN if [ -e packages.apt ]; then \
             fi
 
 # install any python packages
-ONBUILD COPY requirements.txt* Dockerfile /home/clowder/
+ONBUILD COPY notifications.json requirements.txt* Dockerfile /home/clowder/
 ONBUILD RUN if [ -e requirements.txt ]; then \
                 pip install --no-cache-dir -r requirements.txt; \
             fi

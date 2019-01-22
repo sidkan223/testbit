@@ -25,6 +25,7 @@ RUN pip install --upgrade /tmp/pyclowder \
 
 # folder for pyclowder code
 WORKDIR /home/clowder
+COPY notifications.json /home/clowder
 
 # command to run when starting container
 CMD python "./${MAIN_SCRIPT}"
