@@ -89,6 +89,7 @@ class Connector(object):
                     notifications_interpolate = json.loads(notifications)
                     self.smtp_server = os.getenv('EMAIL_SERVER', None)
                     self.emailmsg = MIMEMultipart('alternative')
+
                     self.emailmsg['From'] = os.getenv('EMAIL_SENDER', notifications_json.get('sender'))
                     self.emailmsg['Subject'] = notifications_interpolate.get('notifications').get('email').get(
                         'subject')
@@ -104,6 +105,7 @@ class Connector(object):
             msg = MIMEMultipart('alternative')
             msg['Subject'] = self.emailmsg['Subject']
             msg['From'] = self.emailmsg['From']
+
             content = "%s \n%s" % (self.emailmsg['Body'], clowderurl)
             content = MIMEText(content.encode('utf-8'), _charset='utf-8')
             msg.attach(content)
