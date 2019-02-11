@@ -1,6 +1,7 @@
 {
     "extractor_name": "ExtractorName",
     "sender": "admin@system.com",
+    "receiver"" "receiver@system.com"
     "notifications": {
         "email": {
             "from": "${sender}",

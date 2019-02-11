@@ -91,6 +91,7 @@ class Connector(object):
                     self.emailmsg = MIMEMultipart('alternative')
 
                     self.emailmsg['From'] = os.getenv('EMAIL_SENDER', notifications_json.get('sender'))
+                    self.emailmsg['To'] = os.getenv('EMAIL_RECEIVER', notifications_json.get('receiver'))
                     self.emailmsg['Subject'] = notifications_interpolate.get('notifications').get('email').get(
                         'subject')
                     self.emailmsg['Body'] = notifications_interpolate.get('notifications').get('email').get('body')
@@ -105,7 +106,7 @@ class Connector(object):
             msg = MIMEMultipart('alternative')
             msg['Subject'] = self.emailmsg['Subject']
             msg['From'] = self.emailmsg['From']
-
+            msg['To'] = self.emailmsg['To']
             content = "%s \n%s" % (self.emailmsg['Body'], clowderurl)
             content = MIMEText(content.encode('utf-8'), _charset='utf-8')
             msg.attach(content)
