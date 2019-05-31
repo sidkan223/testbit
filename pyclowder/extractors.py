@@ -48,7 +48,7 @@ class Extractor(object):
             print("Could not find extractor_info.json")
             sys.exit(-1)
         try:
-            with open(filename) as info_file:
+            with open(filename, "r", encoding="utf-8") as info_file:
                 self.extractor_info = json.load(info_file)
         except Exception:  # pylint: disable=broad-except
             print("Error loading extractor_info.json")

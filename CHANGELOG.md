@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Docker compose file for starting up the Clowder stack
   [BD-2226](https://opensource.ncsa.illinois.edu/jira/browse/BD-2226)
 
+### Fixed
+- Error with loading JSON file with diacritics
+
 ## 2.1.1 - 2018-07-12
 
 ### Fixed
