@@ -20,6 +20,7 @@ RUN apt-get -q -q update \
     && curl -k https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py \
     && python /tmp/get-pip.py \
     && pip install --upgrade setuptools \
+    && pip install --upgrade pip \
     && rm -rf /var/lib/apt/lists/* /tmp/get-pip.py
 
 # instal pyclowder
