@@ -1,3 +1,5 @@
+# This has moved to https://github.com/clowder-framework/pyclowder
+
 [![DOI](https://zenodo.org/badge/126513159.svg)](https://zenodo.org/badge/latestdoi/126513159)
 
 This repository contains the next generation of pyClowder. This library makes it easier to interact with clowder and
