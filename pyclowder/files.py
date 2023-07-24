@@ -117,7 +117,7 @@ def submit_extraction(connector, host, key, fileid, extractorname):
     return result.json()
 
 
-def submit_extractions_by_dataset(connector, host, key, datasetid, extractorname, ext=False):
+def submit_extractions_by_dataset(connector, host, key, datasetid, extractorname, ext=None):
     """Manually trigger an extraction on all files in a dataset.
 
         This will iterate through all files in the given dataset and submit them to
@@ -142,7 +142,7 @@ def submit_extractions_by_dataset(connector, host, key, datasetid, extractorname
         submit_extraction(connector, host, key, f['id'], extractorname)
 
 
-def submit_extractions_by_collection(connector, host, key, collectionid, extractorname, ext=False, recursive=True):
+def submit_extractions_by_collection(connector, host, key, collectionid, extractorname, ext=None, recursive=True):
     """Manually trigger an extraction on all files in a collection.
 
         This will iterate through all datasets in the given collection and submit them to
